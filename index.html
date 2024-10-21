@@ -47,32 +47,37 @@
 <button id="restart">Play Again</button>
 
 <script>
+// Setup the canvas and context
 const canvas = document.getElementById('gameCanvas');
 const context = canvas.getContext('2d');
 const scoreboard = document.getElementById('scoreboard');
 const restartButton = document.getElementById('restart');
 
-// Define platform properties
+// Load the player character (simple cartoon character)
+const playerImage = new Image();
+playerImage.src = 'https://upload.wikimedia.org/wikipedia/commons/1/1e/Cute-Bunny.png';  // Free-to-use cute bunny image
+
+// Game physics and parameters
 const platformWidth = 65;
 const platformHeight = 20;
 const initialPlatformY = canvas.height - 50;
-
-// Game physics
 const gravity = 0.4;
-const bounceVelocity = -15;  // Erhöhe die Sprunghöhe (von -10 auf -15)
+const bounceVelocity = -10; // Adjusted to a reasonable height
 const horizontalSpeed = 3;
-const maxPlatformGap = 120;  // Reduziere den Abstand zwischen den Plattformen
+let maxPlatformGap = 120; // This will change as the player progresses
 
-// Platforms array to store platform coordinates
+// Platforms array
 let platforms = [{ x: canvas.width / 2 - platformWidth / 2, y: initialPlatformY }];
 
-// Player object (Doodle) - changed to a circle instead of a yellow rectangle
+// Player object (the character)
 const doodle = {
-  radius: 20,
-  x: canvas.width / 2,
+  width: 40,
+  height: 40,
+  x: canvas.width / 2 - 20,
   y: initialPlatformY - 60,
   dx: 0,
-  dy: 0
+  dy: 0,
+  currentPlatformY: initialPlatformY - 60 // Keep track of the current platform for score calculation
 };
 
 let score = 0;
@@ -81,7 +86,7 @@ let gameOver = false;
 let isLeftPressed = false;
 let isRightPressed = false;
 
-// Keydown and keyup event listeners for player control
+// Keydown and keyup events for player movement
 document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft') {
     isLeftPressed = true;
@@ -101,9 +106,10 @@ document.addEventListener('keyup', (e) => {
 // Function to reset the game
 function resetGame() {
   score = 0;
-  doodle.x = canvas.width / 2;
+  doodle.x = canvas.width / 2 - 20;
   doodle.y = initialPlatformY - 60;
   doodle.dy = 0;
+  doodle.currentPlatformY = initialPlatformY - 60;
   platforms = [{ x: canvas.width / 2 - platformWidth / 2, y: initialPlatformY }];
   let platformY = initialPlatformY;
   while (platformY > 0) {
@@ -140,22 +146,30 @@ function gameLoop() {
   doodle.x += doodle.dx;
   doodle.y += doodle.dy;
 
-  // Platform collision detection
+  // Platform collision detection and score increase logic
   platforms.forEach((platform) => {
     if (
       doodle.dy > 0 &&
-      doodle.x + doodle.radius > platform.x &&
-      doodle.x - doodle.radius < platform.x + platformWidth &&
-      doodle.y + doodle.radius > platform.y &&
-      doodle.y + doodle.radius < platform.y + platformHeight
+      doodle.x + doodle.width > platform.x &&
+      doodle.x < platform.x + platformWidth &&
+      doodle.y + doodle.height > platform.y &&
+      doodle.y + doodle.height < platform.y + platformHeight
     ) {
       doodle.dy = bounceVelocity;
-      score++;
-      scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
+      
+      // Only increase score if the platform is higher than the previous one
+      if (platform.y < doodle.currentPlatformY) {
+        score++;
+        doodle.currentPlatformY = platform.y;
+        scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
+        
+        // Increase difficulty by making platform gaps larger as the score increases
+        maxPlatformGap = Math.min(200, maxPlatformGap + 2);
+      }
     }
   });
 
-  // Move platforms down when doodle jumps above half screen
+  // Move platforms down when doodle jumps above half the screen
   if (doodle.y < canvas.height / 2 && doodle.dy < 0) {
     platforms.forEach((platform) => {
       platform.y -= doodle.dy;
@@ -164,7 +178,7 @@ function gameLoop() {
     // Remove platforms that have gone off-screen
     platforms = platforms.filter(platform => platform.y < canvas.height);
     
-    // Add new platforms to the top
+    // Add new platforms at the top
     while (platforms[platforms.length - 1].y > 0) {
       const newPlatformX = Math.random() * (canvas.width - platformWidth);
       const newPlatformY = platforms[platforms.length - 1].y - platformHeight - Math.random() * maxPlatformGap;
@@ -182,10 +196,10 @@ function gameLoop() {
   }
 
   // Screen wrapping
-  if (doodle.x - doodle.radius > canvas.width) {
-    doodle.x = -doodle.radius;
-  } else if (doodle.x + doodle.radius < 0) {
-    doodle.x = canvas.width + doodle.radius;
+  if (doodle.x + doodle.width < 0) {
+    doodle.x = canvas.width;
+  } else if (doodle.x > canvas.width) {
+    doodle.x = -doodle.width;
   }
 
   // Render platforms
@@ -194,15 +208,11 @@ function gameLoop() {
     context.fillRect(platform.x, platform.y, platformWidth, platformHeight);
   });
 
-  // Render player (doodle as a circle)
-  context.fillStyle = 'red';
-  context.beginPath();
-  context.arc(doodle.x, doodle.y, doodle.radius, 0, Math.PI * 2);
-  context.fill();
-  context.closePath();
+  // Render player character (cute bunny)
+  context.drawImage(playerImage, doodle.x, doodle.y, doodle.width, doodle.height);
 
   // End game if doodle falls below the screen
-  if (doodle.y - doodle.radius > canvas.height) {
+  if (doodle.y > canvas.height) {
     endGame();
     return;
   }
