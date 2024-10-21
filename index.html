@@ -17,11 +17,10 @@
     canvas {
       border: 2px solid black;
       background-color: lightblue;
-      /* Statt fester Größe dynamische Anpassung */
       width: 100%;
       height: auto;
-      max-width: 900px; /* Maximale Breite weiter vergrößert */
-      max-height: 1600px; /* Maximale Höhe weiter vergrößert */
+      max-width: 900px;
+      max-height: 1600px;
     }
     #scoreboard {
       position: absolute;
@@ -43,6 +42,12 @@
       border: none;
       cursor: pointer;
     }
+    #restart {
+      display: none;
+      top: 70%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
     #instructions {
       position: absolute;
       top: 20%;
@@ -60,6 +65,8 @@
       display: block;
       position: relative;
       transform: none;
+      left: 50%;
+      transform: translateX(-50%);
     }
   </style>
 </head>
@@ -74,7 +81,7 @@
   <p>Der Score wird nur erhöht, wenn du eine höhere Plattform erreichst.</p>
   <button id="startButton">Spiel Starten</button>
 </div>
-<button id="restart">Play Again</button>
+<button id="restart">Erneut versuchen</button>
 
 <script>
 // Setup the canvas and context
@@ -223,7 +230,7 @@ function gameLoop() {
         scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
 
         // Increase difficulty by making platform gaps larger as the score increases
-        maxPlatformGap = Math.min(200, maxPlatformGap + 2);
+        maxPlatformGap = Math.min(200, maxPlatformGap + 5); // Schnellere Erhöhung der Schwierigkeit
       }
     }
   });
