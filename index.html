@@ -92,9 +92,9 @@ let isImageLoaded = false;
 const platformWidth = 65;
 const platformHeight = 20;
 const initialPlatformY = canvas.height - 50;
-const gravity = 0.4;
-const bounceVelocity = -12; // Konstant gleiche Sprunghöhe, egal was passiert
-const horizontalSpeed = 2;
+const gravity = 0.33;
+const drag = 0.3;
+const bounceVelocity = -12.5; // Konstant gleiche Sprunghöhe, egal was passiert
 let maxPlatformGap = 120; // This will change as the player progresses
 
 // Platforms array
