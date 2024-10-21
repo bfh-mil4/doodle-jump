@@ -17,7 +17,11 @@
     canvas {
       border: 2px solid black;
       background-color: lightblue;
-      display: none;
+      /* Statt fester Größe dynamische Anpassung */
+      width: 100%;
+      height: auto;
+      max-width: 600px; /* Maximale Breite, um auf kleineren Bildschirmen nicht zu groß zu werden */
+      max-height: 1000px; /* Maximale Höhe, um das Verhältnis zu wahren */
     }
     #scoreboard {
       position: absolute;
@@ -156,7 +160,10 @@ function resetGame() {
 // Function to end the game
 function endGame() {
   gameOver = true;
-  // Highscore update already happens during gameplay
+  if (score > highscore) {
+    highscore = score;
+  }
+  scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
   restartButton.style.display = 'block';
 }
 
@@ -207,10 +214,9 @@ function gameLoop() {
         score++;
         doodle.currentPlatformY = platform.y;
         scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
-
-        // **Highscore Aktualisierung**
+        
         if (score > highscore) {
-          highscore = score; // Der Highscore wird jetzt während des Spiels aktualisiert
+          highscore = score; // Highscore während des Spiels aktualisieren
         }
         
         // Update the scoreboard with the new highscore
