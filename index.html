@@ -52,9 +52,9 @@
       margin-bottom: 20px;
     }
     #startButton {
-      margin-top: 20px; /* Abstand zum Text */
+      margin-top: 20px;
       display: block;
-      position: relative; /* Button unter dem Text */
+      position: relative;
       transform: none;
     }
   </style>
@@ -93,7 +93,7 @@ const platformWidth = 65;
 const platformHeight = 20;
 const initialPlatformY = canvas.height - 50;
 const gravity = 0.4;
-const bounceVelocity = -12.5; // Adjusted to a reasonable height
+const bounceVelocity = -10; // Konstant gleiche Sprunghöhe, egal was passiert
 const horizontalSpeed = 2;
 let maxPlatformGap = 120; // This will change as the player progresses
 
@@ -203,8 +203,8 @@ function gameLoop() {
       doodle.y + doodle.height > platform.y &&
       doodle.y + doodle.height < platform.y + platformHeight
     ) {
-      doodle.dy = bounceVelocity;
-      
+      doodle.dy = bounceVelocity; // Konstant gleiche Sprunghöhe
+
       // Only increase score if the platform is higher than the previous one
       if (platform.y < doodle.currentPlatformY) {
         score++;
