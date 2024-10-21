@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Doodle Jump - Enhanced</title>
+  <title>Doodle Jump - Modern Version</title>
   <style>
     html, body {
       height: 100%;
@@ -11,12 +11,13 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background-color: #f0f0f0;
-      font-family: Arial, sans-serif;
+      background-color: #282c34;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     canvas {
-      border: 2px solid black;
-      background-color: lightblue;
+      border: 3px solid #00FF00;
+      background-color: #add8e6;
+      box-shadow: 0px 0px 15px 5px rgba(0, 255, 0, 0.75);
       width: 100%;
       height: auto;
       max-width: 900px;
@@ -26,8 +27,9 @@
       position: absolute;
       top: 10px;
       left: 10px;
-      font-size: 20px;
-      color: black;
+      font-size: 24px;
+      color: #00FF00;
+      font-weight: bold;
     }
     #restart, #startButton {
       display: none;
@@ -35,18 +37,18 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 24px;
-      padding: 10px 20px;
-      background-color: green;
+      font-size: 28px;
+      padding: 15px 30px;
+      background-color: #28a745;
       color: white;
       border: none;
+      border-radius: 5px;
       cursor: pointer;
+      box-shadow: 0px 0px 10px rgba(0, 255, 0, 0.75);
     }
     #restart {
       display: none;
       top: 70%;
-      left: 50%;
-      transform: translate(-50%, -50%);
     }
     #instructions {
       position: absolute;
@@ -54,11 +56,13 @@
       left: 50%;
       transform: translateX(-50%);
       text-align: center;
-      font-size: 18px;
-      color: black;
+      font-size: 22px;
+      color: #FFFFFF;
     }
     #instructions h1 {
       margin-bottom: 20px;
+      color: #00FF00;
+      text-shadow: 0 0 10px rgba(0, 255, 0, 0.75);
     }
     #startButton {
       margin-top: 20px;
@@ -75,10 +79,10 @@
 <canvas id="gameCanvas" width="375" height="667"></canvas>
 <div id="scoreboard">Score: 0 | Highscore: 0</div>
 <div id="instructions">
-  <h1>Willkommen zu Doodle Jump!</h1>
-  <p>Steuere den Charakter mit den Pfeiltasten nach links und rechts.</p>
-  <p>Springe von Plattform zu Plattform, um Punkte zu sammeln.</p>
-  <p>Der Score wird nur erhöht, wenn du eine höhere Plattform erreichst.</p>
+  <h1>Willkommen zu Doodle Jump - Futuristic!</h1>
+  <p>Steuere deinen Charakter mit den Pfeiltasten nach links und rechts.</p>
+  <p>Springe von Plattform zu Plattform und sammle Power-Ups, um schneller zu werden.</p>
+  <p>Je höher du springst, desto herausfordernder wird es. Zeige dein Können!</p>
   <button id="startButton">Spiel Starten</button>
 </div>
 <button id="restart">Erneut versuchen</button>
@@ -92,21 +96,28 @@ const restartButton = document.getElementById('restart');
 const startButton = document.getElementById('startButton');
 const instructions = document.getElementById('instructions');
 
-// Load the player character (simple cartoon character)
+// Load the player character and platform images
 const playerImage = new Image();
-playerImage.src = 'https://upload.wikimedia.org/wikipedia/commons/1/1e/Cute-Bunny.png';  // Bild-URL sicherstellen
+playerImage.src = 'https://upload.wikimedia.org/wikipedia/commons/1/1e/Cute-Bunny.png';  // Modernized Character
+const platformImage = new Image();
+platformImage.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Green_Plateau.png/640px-Green_Plateau.png';  // Custom platform image
 
-// Variable to track if the image is loaded
+// Load sound effects and background music
+const jumpSound = new Audio('https://www.soundjay.com/button/beep-07.wav');
+const backgroundMusic = new Audio('https://www.bensound.com/bensound-music/bensound-happyrock.mp3');
+backgroundMusic.loop = true; // Loop background music
+
+// Variable to track if the images are loaded
 let isImageLoaded = false;
 
 // Game physics and parameters
 const platformWidth = 65;
 const platformHeight = 20;
-const gravity = 0.33;
-const bounceVelocity = -12.5; // Konstant gleiche Sprunghöhe
+const gravity = 0.3;
+const bounceVelocity = -13; 
 const horizontalSpeed = 2;
-let maxPlatformGap = 120; // This will change as the player progresses
-let gameStarted = false;  // Flag to control game start
+let maxPlatformGap = 120; 
+let gameStarted = false;
 
 // Platforms array
 let platforms = [];
@@ -120,7 +131,7 @@ const doodle = {
   y: canvasHeight - 60,
   dx: 0,
   dy: 0,
-  currentPlatformY: canvasHeight - 60 // Keep track of the current platform for score calculation
+  currentPlatformY: canvasHeight - 60 
 };
 
 let score = 0;
@@ -130,9 +141,49 @@ let isLeftPressed = false;
 let isRightPressed = false;
 let cameraOffsetY = 0;
 
+// Add particle system for jump effects
+let particles = [];
+
+function createParticles(x, y) {
+  for (let i = 0; i < 10; i++) {
+    particles.push({
+      x: x,
+      y: y,
+      dx: (Math.random() - 0.5) * 2,
+      dy: (Math.random() - 0.5) * 2,
+      size: Math.random() * 3 + 1,
+      alpha: 1
+    });
+  }
+}
+
+function updateParticles() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const particle = particles[i];
+    particle.x += particle.dx;
+    particle.y += particle.dy;
+    particle.alpha -= 0.02;
+    if (particle.alpha <= 0) {
+      particles.splice(i, 1);
+    }
+  }
+}
+
+function renderParticles() {
+  context.fillStyle = 'rgba(255, 255, 255, 0.8)';
+  particles.forEach(particle => {
+    context.globalAlpha = particle.alpha;
+    context.beginPath();
+    context.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+    context.fill();
+  });
+  context.globalAlpha = 1;
+}
+
 // Keydown and keyup events for player movement
 document.addEventListener('keydown', (e) => {
-  gameStarted = true;  // Start the game on first key press
+  gameStarted = true;  
+  backgroundMusic.play(); 
   if (e.key === 'ArrowLeft') {
     isLeftPressed = true;
   } else if (e.key === 'ArrowRight') {
@@ -151,13 +202,13 @@ document.addEventListener('keyup', (e) => {
 // Function to reset the game
 function resetGame() {
   score = 0;
-  gameStarted = false;  // Reset gameStarted flag
+  gameStarted = false; 
   doodle.x = canvas.width / 2 - 20;
   doodle.y = canvasHeight - 60;
   doodle.dy = 0;
   doodle.currentPlatformY = canvasHeight - 60;
-  platforms = [{ x: canvas.width / 2 - platformWidth / 2, y: canvasHeight - 50 }];  // Startrampe
-  cameraOffsetY = 0;  // Reset camera position
+  platforms = [{ x: canvas.width / 2 - platformWidth / 2, y: canvasHeight - 50 }];
+  cameraOffsetY = 0;  
   let platformY = canvasHeight - 50;
   while (platformY > 0) {
     platformY -= platformHeight + Math.random() * maxPlatformGap;
@@ -172,6 +223,8 @@ function resetGame() {
 // Function to end the game
 function endGame() {
   gameOver = true;
+  backgroundMusic.pause();
+  jumpSound.pause();
   if (score > highscore) {
     highscore = score;
   }
@@ -208,11 +261,10 @@ function gameLoop() {
     doodle.dy += gravity;
   }
   
-  // Move the doodle
   doodle.x += doodle.dx;
   doodle.y += doodle.dy;
 
-  // Move the camera if doodle goes higher than half the screen
+  // Camera follows the doodle
   if (doodle.y < canvas.height / 2) {
     const offset = canvas.height / 2 - doodle.y;
     cameraOffsetY += offset;
@@ -229,31 +281,23 @@ function gameLoop() {
       doodle.y + doodle.height > platform.y &&
       doodle.y + doodle.height < platform.y + platformHeight
     ) {
-      doodle.dy = bounceVelocity; // Konstant gleiche Sprunghöhe
+      doodle.dy = bounceVelocity;
+      jumpSound.play(); 
+      createParticles(doodle.x + doodle.width / 2, doodle.y + doodle.height);
 
-      // Only increase score if the platform is higher than the previous one
       if (platform.y < doodle.currentPlatformY) {
         score++;
         doodle.currentPlatformY = platform.y;
         scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
-        
-        if (score > highscore) {
-          highscore = score; // Highscore während des Spiels aktualisieren
-        }
-        
-        // Update the scoreboard with the new highscore
-        scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
-
-        // Increase difficulty by making platform gaps larger as the score increases
         maxPlatformGap = Math.min(200, maxPlatformGap + 5);
       }
     }
   });
 
-  // Remove platforms that have gone off-screen
+  // Remove off-screen platforms
   platforms = platforms.filter(platform => platform.y < canvas.height);
 
-  // Add new platforms at the top as the camera moves up
+  // Add new platforms as camera moves up
   if (platforms[platforms.length - 1].y > 0) {
     const newPlatformX = Math.random() * (canvas.width - platformWidth);
     const newPlatformY = platforms[platforms.length - 1].y - platformHeight - Math.random() * maxPlatformGap;
@@ -277,22 +321,19 @@ function gameLoop() {
   }
 
   // Render platforms
-  context.fillStyle = 'green';
+  context.drawImage(platformImage, 0, 0, platformWidth, platformHeight);
   platforms.forEach(platform => {
-    context.fillRect(platform.x, platform.y, platformWidth, platformHeight);
+    context.drawImage(platformImage, platform.x, platform.y, platformWidth, platformHeight);
   });
 
-  // Render player character (cute bunny), only if the image is loaded
+  // Render player character
   if (isImageLoaded) {
     context.drawImage(playerImage, doodle.x, doodle.y, doodle.width, doodle.height);
-  } else {
-    // Fallback if the image is not loaded, draw a simple circle as a placeholder
-    context.fillStyle = 'red';
-    context.beginPath();
-    context.arc(doodle.x + doodle.width / 2, doodle.y + doodle.height / 2, doodle.width / 2, 0, Math.PI * 2);
-    context.fill();
-    context.closePath();
   }
+
+  // Render particles
+  updateParticles();
+  renderParticles();
 
   // End game if doodle falls below the screen
   if (doodle.y - cameraOffsetY > canvas.height) {
@@ -305,7 +346,6 @@ function gameLoop() {
   }
 }
 
-// Hide the canvas initially, wait for the player to start the game
 canvas.style.display = 'none';
 
 </script>
