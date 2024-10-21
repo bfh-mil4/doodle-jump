@@ -59,9 +59,9 @@ const initialPlatformY = canvas.height - 50;
 
 // Game physics
 const gravity = 0.4;
-const bounceVelocity = -10;
+const bounceVelocity = -15;  // Erhöhe die Sprunghöhe (von -10 auf -15)
 const horizontalSpeed = 3;
-const maxPlatformGap = 150;
+const maxPlatformGap = 120;  // Reduziere den Abstand zwischen den Plattformen
 
 // Platforms array to store platform coordinates
 let platforms = [{ x: canvas.width / 2 - platformWidth / 2, y: initialPlatformY }];
