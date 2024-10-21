@@ -106,6 +106,7 @@ const gravity = 0.33;
 const bounceVelocity = -12.5; // Konstant gleiche Sprunghöhe
 const horizontalSpeed = 2;
 let maxPlatformGap = 120; // This will change as the player progresses
+let gameStarted = false;  // Flag to control game start
 
 // Platforms array
 let platforms = [];
@@ -131,6 +132,7 @@ let cameraOffsetY = 0;
 
 // Keydown and keyup events for player movement
 document.addEventListener('keydown', (e) => {
+  gameStarted = true;  // Start the game on first key press
   if (e.key === 'ArrowLeft') {
     isLeftPressed = true;
   } else if (e.key === 'ArrowRight') {
@@ -149,11 +151,12 @@ document.addEventListener('keyup', (e) => {
 // Function to reset the game
 function resetGame() {
   score = 0;
+  gameStarted = false;  // Reset gameStarted flag
   doodle.x = canvas.width / 2 - 20;
   doodle.y = canvasHeight - 60;
   doodle.dy = 0;
   doodle.currentPlatformY = canvasHeight - 60;
-  platforms = [{ x: canvas.width / 2 - platformWidth / 2, y: canvasHeight - 50 }];
+  platforms = [{ x: canvas.width / 2 - platformWidth / 2, y: canvasHeight - 50 }];  // Startrampe
   cameraOffsetY = 0;  // Reset camera position
   let platformY = canvasHeight - 50;
   while (platformY > 0) {
@@ -200,8 +203,10 @@ playerImage.onload = function() {
 function gameLoop() {
   context.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Apply gravity to the player
-  doodle.dy += gravity;
+  // Apply gravity to the player only after game starts
+  if (gameStarted) {
+    doodle.dy += gravity;
+  }
   
   // Move the doodle
   doodle.x += doodle.dx;
