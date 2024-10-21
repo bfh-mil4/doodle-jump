@@ -57,6 +57,9 @@ const restartButton = document.getElementById('restart');
 const playerImage = new Image();
 playerImage.src = 'https://upload.wikimedia.org/wikipedia/commons/1/1e/Cute-Bunny.png';  // Free-to-use cute bunny image
 
+// Variable to track if the image is loaded
+let isImageLoaded = false;
+
 // Game physics and parameters
 const platformWidth = 65;
 const platformHeight = 20;
@@ -135,6 +138,12 @@ function endGame() {
 // Restart button event listener
 restartButton.addEventListener('click', resetGame);
 
+// When the player image has loaded, we can begin rendering the character
+playerImage.onload = function() {
+  isImageLoaded = true;
+  requestAnimationFrame(gameLoop); // Start the game once the image has loaded
+};
+
 // Game loop function
 function gameLoop() {
   context.clearRect(0, 0, canvas.width, canvas.height);
@@ -208,8 +217,17 @@ function gameLoop() {
     context.fillRect(platform.x, platform.y, platformWidth, platformHeight);
   });
 
-  // Render player character (cute bunny)
-  context.drawImage(playerImage, doodle.x, doodle.y, doodle.width, doodle.height);
+  // Render player character (cute bunny), only if the image is loaded
+  if (isImageLoaded) {
+    context.drawImage(playerImage, doodle.x, doodle.y, doodle.width, doodle.height);
+  } else {
+    // Fallback if the image is not loaded, draw a simple circle as a placeholder
+    context.fillStyle = 'red';
+    context.beginPath();
+    context.arc(doodle.x + doodle.width / 2, doodle.y + doodle.height / 2, doodle.width / 2, 0, Math.PI * 2);
+    context.fill();
+    context.closePath();
+  }
 
   // End game if doodle falls below the screen
   if (doodle.y > canvas.height) {
@@ -222,8 +240,9 @@ function gameLoop() {
   }
 }
 
-// Start the game loop
+// Start the game loop (fallback if the image doesn't load quickly)
 requestAnimationFrame(gameLoop);
+
 </script>
 
 </body>
