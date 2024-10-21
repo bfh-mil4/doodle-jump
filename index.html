@@ -102,24 +102,24 @@ let isImageLoaded = false;
 // Game physics and parameters
 const platformWidth = 65;
 const platformHeight = 20;
-const initialPlatformY = canvas.height - 50;
 const gravity = 0.33;
-const bounceVelocity = -12.5; // Konstant gleiche Sprunghöhe, egal was passiert
+const bounceVelocity = -12.5; // Konstant gleiche Sprunghöhe
 const horizontalSpeed = 2;
 let maxPlatformGap = 120; // This will change as the player progresses
 
 // Platforms array
-let platforms = [{ x: canvas.width / 2 - platformWidth / 2, y: initialPlatformY }];
+let platforms = [];
+const canvasHeight = canvas.height;
 
 // Player object (the character)
 const doodle = {
   width: 40,
   height: 40,
   x: canvas.width / 2 - 20,
-  y: initialPlatformY - 60,
+  y: canvasHeight - 60,
   dx: 0,
   dy: 0,
-  currentPlatformY: initialPlatformY - 60 // Keep track of the current platform for score calculation
+  currentPlatformY: canvasHeight - 60 // Keep track of the current platform for score calculation
 };
 
 let score = 0;
@@ -127,6 +127,7 @@ let highscore = 0;
 let gameOver = false;
 let isLeftPressed = false;
 let isRightPressed = false;
+let cameraOffsetY = 0;
 
 // Keydown and keyup events for player movement
 document.addEventListener('keydown', (e) => {
@@ -149,11 +150,12 @@ document.addEventListener('keyup', (e) => {
 function resetGame() {
   score = 0;
   doodle.x = canvas.width / 2 - 20;
-  doodle.y = initialPlatformY - 60;
+  doodle.y = canvasHeight - 60;
   doodle.dy = 0;
-  doodle.currentPlatformY = initialPlatformY - 60;
-  platforms = [{ x: canvas.width / 2 - platformWidth / 2, y: initialPlatformY }];
-  let platformY = initialPlatformY;
+  doodle.currentPlatformY = canvasHeight - 60;
+  platforms = [{ x: canvas.width / 2 - platformWidth / 2, y: canvasHeight - 50 }];
+  cameraOffsetY = 0;  // Reset camera position
+  let platformY = canvasHeight - 50;
   while (platformY > 0) {
     platformY -= platformHeight + Math.random() * maxPlatformGap;
     const platformX = Math.random() * (canvas.width - platformWidth);
@@ -205,6 +207,14 @@ function gameLoop() {
   doodle.x += doodle.dx;
   doodle.y += doodle.dy;
 
+  // Move the camera if doodle goes higher than half the screen
+  if (doodle.y < canvas.height / 2) {
+    const offset = canvas.height / 2 - doodle.y;
+    cameraOffsetY += offset;
+    doodle.y = canvas.height / 2;
+    platforms.forEach(platform => platform.y += offset);
+  }
+
   // Platform collision detection and score increase logic
   platforms.forEach((platform) => {
     if (
@@ -230,26 +240,19 @@ function gameLoop() {
         scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
 
         // Increase difficulty by making platform gaps larger as the score increases
-        maxPlatformGap = Math.min(200, maxPlatformGap + 5); // Schnellere Erhöhung der Schwierigkeit
+        maxPlatformGap = Math.min(200, maxPlatformGap + 5);
       }
     }
   });
 
-  // Move platforms down when doodle jumps above half the screen
-  if (doodle.y < canvas.height / 2 && doodle.dy < 0) {
-    platforms.forEach((platform) => {
-      platform.y -= doodle.dy;
-    });
-    
-    // Remove platforms that have gone off-screen
-    platforms = platforms.filter(platform => platform.y < canvas.height);
-    
-    // Add new platforms at the top
-    while (platforms[platforms.length - 1].y > 0) {
-      const newPlatformX = Math.random() * (canvas.width - platformWidth);
-      const newPlatformY = platforms[platforms.length - 1].y - platformHeight - Math.random() * maxPlatformGap;
-      platforms.push({ x: newPlatformX, y: newPlatformY });
-    }
+  // Remove platforms that have gone off-screen
+  platforms = platforms.filter(platform => platform.y < canvas.height);
+
+  // Add new platforms at the top as the camera moves up
+  if (platforms[platforms.length - 1].y > 0) {
+    const newPlatformX = Math.random() * (canvas.width - platformWidth);
+    const newPlatformY = platforms[platforms.length - 1].y - platformHeight - Math.random() * maxPlatformGap;
+    platforms.push({ x: newPlatformX, y: newPlatformY });
   }
 
   // Player movement controls
@@ -287,7 +290,7 @@ function gameLoop() {
   }
 
   // End game if doodle falls below the screen
-  if (doodle.y > canvas.height) {
+  if (doodle.y - cameraOffsetY > canvas.height) {
     endGame();
     return;
   }
