@@ -17,6 +17,7 @@
     canvas {
       border: 2px solid black;
       background-color: lightblue;
+      display: none;
     }
     #scoreboard {
       position: absolute;
@@ -25,7 +26,7 @@
       font-size: 20px;
       color: black;
     }
-    #restart {
+    #restart, #startButton {
       display: none;
       position: absolute;
       top: 50%;
@@ -38,12 +39,31 @@
       border: none;
       cursor: pointer;
     }
+    #instructions {
+      position: absolute;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      font-size: 18px;
+      color: black;
+    }
+    #startButton {
+      display: block;
+    }
   </style>
 </head>
 <body>
 
 <canvas id="gameCanvas" width="375" height="667"></canvas>
 <div id="scoreboard">Score: 0 | Highscore: 0</div>
+<div id="instructions">
+  <h1>Willkommen zu Doodle Jump!</h1>
+  <p>Steuere den Charakter mit den Pfeiltasten nach links und rechts.</p>
+  <p>Springe von Plattform zu Plattform, um Punkte zu sammeln.</p>
+  <p>Der Score wird nur erhöht, wenn du eine höhere Plattform erreichst.</p>
+  <button id="startButton">Spiel Starten</button>
+</div>
 <button id="restart">Play Again</button>
 
 <script>
@@ -52,10 +72,12 @@ const canvas = document.getElementById('gameCanvas');
 const context = canvas.getContext('2d');
 const scoreboard = document.getElementById('scoreboard');
 const restartButton = document.getElementById('restart');
+const startButton = document.getElementById('startButton');
+const instructions = document.getElementById('instructions');
 
 // Load the player character (simple cartoon character)
 const playerImage = new Image();
-playerImage.src = 'https://upload.wikimedia.org/wikipedia/commons/1/1e/Cute-Bunny.png';  // Free-to-use cute bunny image
+playerImage.src = 'https://upload.wikimedia.org/wikipedia/commons/1/1e/Cute-Bunny.png';  // Bild-URL sicherstellen
 
 // Variable to track if the image is loaded
 let isImageLoaded = false;
@@ -65,7 +87,7 @@ const platformWidth = 65;
 const platformHeight = 20;
 const initialPlatformY = canvas.height - 50;
 const gravity = 0.4;
-const bounceVelocity = -12.5; // Adjusted to a reasonable height
+const bounceVelocity = -10; // Adjusted to a reasonable height
 const horizontalSpeed = 3;
 let maxPlatformGap = 120; // This will change as the player progresses
 
@@ -138,10 +160,21 @@ function endGame() {
 // Restart button event listener
 restartButton.addEventListener('click', resetGame);
 
+// Function to start the game
+function startGame() {
+  canvas.style.display = 'block';
+  instructions.style.display = 'none';
+  scoreboard.style.display = 'block';
+  restartButton.style.display = 'none';
+  resetGame();
+}
+
+// Start button event listener
+startButton.addEventListener('click', startGame);
+
 // When the player image has loaded, we can begin rendering the character
 playerImage.onload = function() {
   isImageLoaded = true;
-  requestAnimationFrame(gameLoop); // Start the game once the image has loaded
 };
 
 // Game loop function
@@ -240,8 +273,8 @@ function gameLoop() {
   }
 }
 
-// Start the game loop (fallback if the image doesn't load quickly)
-requestAnimationFrame(gameLoop);
+// Hide the canvas initially, wait for the player to start the game
+canvas.style.display = 'none';
 
 </script>
 
