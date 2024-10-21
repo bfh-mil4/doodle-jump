@@ -48,8 +48,14 @@
       font-size: 18px;
       color: black;
     }
+    #instructions h1 {
+      margin-bottom: 20px;
+    }
     #startButton {
+      margin-top: 20px; /* Abstand zum Text */
       display: block;
+      position: relative; /* Button unter dem Text */
+      transform: none;
     }
   </style>
 </head>
@@ -87,8 +93,8 @@ const platformWidth = 65;
 const platformHeight = 20;
 const initialPlatformY = canvas.height - 50;
 const gravity = 0.4;
-const bounceVelocity = -10; // Adjusted to a reasonable height
-const horizontalSpeed = 3;
+const bounceVelocity = -11; // Adjusted to a reasonable height
+const horizontalSpeed = 2;
 let maxPlatformGap = 120; // This will change as the player progresses
 
 // Platforms array
