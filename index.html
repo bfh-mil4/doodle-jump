@@ -125,7 +125,7 @@ const doodle = {
   y: canvas.height - platformHeight - 60, // Spieler wird 60px über der Plattform platziert
   dx: 0,
   dy: 0,
-  highestY: canvas.height - platformHeight - 60 // Die erste Plattform als Bezugspunkt für die Y-Koordinate
+  highestY: canvas.height - platformHeight - 60 // Startposition für die höchste erreichte Position
 };
 
 let score = 0;
@@ -265,9 +265,10 @@ function gameLoop() {
     platforms.forEach(platform => platform.y += offset);
   }
 
-  // Score increases as the player moves up
-  if (canvas.height - cameraOffsetY > doodle.highestY) {
-    score = Math.floor((cameraOffsetY - doodle.highestY) / 100); // Score basierend auf Y-Position
+  // Increase score if doodle moves above the previous highest Y position
+  if (cameraOffsetY > doodle.highestY) {
+    score++;
+    doodle.highestY = cameraOffsetY; // Update the highest Y
     scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
   }
 
