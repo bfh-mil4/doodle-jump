@@ -278,6 +278,25 @@ function gameLoop() {
   }
 }
 
+// Start game function 
+function startGame() {
+  canvas.style.display = 'block';
+  instructions.style.display = 'none';
+  scoreboard.style.display = 'block';
+  restartButton.style.display = 'none';
+  resetGame(); // Reset game and start
+  gameStarted = true; // Make sure game is started
+  requestAnimationFrame(gameLoop); // Start game loop
+}
+
+// Add event listeners
+startButton.addEventListener('click', startGame);
+
+// When the player image has loaded, we can begin rendering the character
+playerImage.onload = function() {
+  isImageLoaded = true;
+};
+
 canvas.style.display = 'none';
 
 </script>
