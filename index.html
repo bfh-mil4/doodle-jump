@@ -210,7 +210,7 @@ function handlePlatformCollisions() {
     ) {
       doodle.dy = bounceVelocity;
       createParticles(doodle.x + doodle.width / 2, doodle.y + doodle.height);
-      handleScoreIncrease(platform);
+      handleScoreIncrease(platform);  // Score-Erhöhung nur bei einer neuen Plattform
     }
   });
 }
@@ -219,6 +219,7 @@ function handlePlatformCollisions() {
 function gameLoop() {
   context.clearRect(0, 0, canvas.width, canvas.height);
 
+  // Apply gravity to the player only after game starts
   if (gameStarted) {
     doodle.dy += gravity;
   }
@@ -226,6 +227,7 @@ function gameLoop() {
   doodle.x += doodle.dx;
   doodle.y += doodle.dy;
 
+  // Camera follows the doodle
   if (doodle.y < canvas.height / 2) {
     const offset = canvas.height / 2 - doodle.y;
     cameraOffsetY += offset;
@@ -243,6 +245,7 @@ function gameLoop() {
     platforms.push({ x: newPlatformX, y: newPlatformY });
   }
 
+  // Player movement controls
   if (isLeftPressed) {
     doodle.dx = -horizontalSpeed;
   } else if (isRightPressed) {
@@ -251,6 +254,7 @@ function gameLoop() {
     doodle.dx = 0;
   }
 
+  // Screen wrapping
   if (doodle.x + doodle.width < 0) {
     doodle.x = canvas.width;
   } else if (doodle.x > canvas.width) {
@@ -285,8 +289,6 @@ function startGame() {
   scoreboard.style.display = 'block';
   restartButton.style.display = 'none';
   resetGame(); // Reset game and start
-  gameStarted = true; // Make sure game is started
-  requestAnimationFrame(gameLoop); // Start game loop
 }
 
 // Add event listeners
