@@ -227,6 +227,15 @@ function gameLoop() {
   doodle.x += doodle.dx;
   doodle.y += doodle.dy;
 
+  // Update player direction based on input
+  if (isLeftPressed) {
+    doodle.dx = -horizontalSpeed;
+  } else if (isRightPressed) {
+    doodle.dx = horizontalSpeed;
+  } else {
+    doodle.dx = 0;  // Stop moving when no key is pressed
+  }
+
   // Camera follows the doodle
   if (doodle.y < canvas.height / 2) {
     const offset = canvas.height / 2 - doodle.y;
@@ -243,15 +252,6 @@ function gameLoop() {
     const newPlatformX = Math.random() * (canvas.width - platformWidth);
     const newPlatformY = platforms[platforms.length - 1].y - platformHeight - Math.random() * maxPlatformGap;
     platforms.push({ x: newPlatformX, y: newPlatformY });
-  }
-
-  // Player movement controls
-  if (isLeftPressed) {
-    doodle.dx = -horizontalSpeed;
-  } else if (isRightPressed) {
-    doodle.dx = horizontalSpeed;
-  } else {
-    doodle.dx = 0;
   }
 
   // Screen wrapping
