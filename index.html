@@ -268,20 +268,22 @@ function gameLoop() {
   // Platform collision detection and score increase logic
   platforms.forEach((platform) => {
     if (
-      doodle.dy > 0 &&
-      doodle.x + doodle.width > platform.x &&
-      doodle.x < platform.x + platformWidth &&
-      doodle.y + doodle.height > platform.y &&
-      doodle.y + doodle.height < platform.y + platformHeight
+      doodle.dy > 0 && // Spieler bewegt sich nach unten
+      doodle.x + doodle.width > platform.x && // Kollisionsüberprüfung rechts
+      doodle.x < platform.x + platformWidth && // Kollisionsüberprüfung links
+      doodle.y + doodle.height > platform.y && // Kollisionsüberprüfung oben
+      doodle.y + doodle.height < platform.y + platformHeight // Kollisionsüberprüfung unten
     ) {
+      // Wenn der Spieler auf der Plattform landet, springt er
       doodle.dy = bounceVelocity;
       createParticles(doodle.x + doodle.width / 2, doodle.y + doodle.height);
 
+      // Wenn die Plattform höher als die bisher höchste Plattform ist
       if (platform.y < doodle.currentPlatformY) {
-        score++;
-        doodle.currentPlatformY = platform.y;
+        score++; // Erhöhe den Score
+        doodle.currentPlatformY = platform.y; // Setze die neue höchste Plattform
         scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
-        maxPlatformGap = Math.min(200, maxPlatformGap + 5);
+        maxPlatformGap = Math.min(200, maxPlatformGap + 5); // Erhöhe die Plattformen-Distanz
       }
     }
   });
