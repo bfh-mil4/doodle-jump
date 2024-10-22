@@ -267,8 +267,7 @@ function gameLoop() {
 
   // Score increases as the player moves up
   if (canvas.height - cameraOffsetY > doodle.highestY) {
-    score++;
-    doodle.highestY = canvas.height - cameraOffsetY;
+    score = Math.floor((cameraOffsetY - doodle.highestY) / 100); // Score basierend auf Y-Position
     scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
   }
 
