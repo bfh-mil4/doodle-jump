@@ -138,6 +138,42 @@ let cameraOffsetY = 0;
 // Add particle system for jump effects
 let particles = [];
 
+function createParticles(x, y) {
+  for (let i = 0; i < 10; i++) {
+    particles.push({
+      x: x,
+      y: y,
+      dx: (Math.random() - 0.5) * 2,
+      dy: (Math.random() - 0.5) * 2,
+      size: Math.random() * 3 + 1,
+      alpha: 1
+    });
+  }
+}
+
+function updateParticles() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const particle = particles[i];
+    particle.x += particle.dx;
+    particle.y += particle.dy;
+    particle.alpha -= 0.02;
+    if (particle.alpha <= 0) {
+      particles.splice(i, 1);
+    }
+  }
+}
+
+function renderParticles() {
+  context.fillStyle = 'rgba(255, 255, 255, 0.8)';
+  particles.forEach(particle => {
+    context.globalAlpha = particle.alpha;
+    context.beginPath();
+    context.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+    context.fill();
+  });
+  context.globalAlpha = 1;
+}
+
 // Keydown and keyup events for player movement
 document.addEventListener('keydown', (e) => {
   gameStarted = true;  
@@ -167,6 +203,7 @@ function resetGame() {
   platforms = [{ x: canvas.width / 2 - platformWidth / 2, y: canvas.height - platformHeight - 10 }]; // Plattformen richtig initialisieren
   cameraOffsetY = 0;
   
+  // Weitere Plattformen über der ersten Plattform erstellen
   let platformY = canvas.height - platformHeight - 10;
   while (platformY > 0) {
     platformY -= platformHeight + Math.random() * maxPlatformGap;
@@ -188,32 +225,25 @@ function endGame() {
   restartButton.style.display = 'block';
 }
 
-// Function to reliably increase the score
-function handleScoreIncrease(platform) {
-  if (platform.y < doodle.currentPlatformY) {
-    score++;
-    doodle.currentPlatformY = platform.y;
-    scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
-    maxPlatformGap = Math.min(200, maxPlatformGap + 5);
-  }
+// Restart button event listener
+restartButton.addEventListener('click', resetGame);
+
+// Function to start the game
+function startGame() {
+  canvas.style.display = 'block';
+  instructions.style.display = 'none';
+  scoreboard.style.display = 'block';
+  restartButton.style.display = 'none';
+  resetGame();
 }
 
-// Platform collision detection and score increase logic
-function handlePlatformCollisions() {
-  platforms.forEach((platform) => {
-    if (
-      doodle.dy > 0 &&
-      doodle.x + doodle.width > platform.x &&
-      doodle.x < platform.x + platformWidth &&
-      doodle.y + doodle.height > platform.y &&
-      doodle.y + doodle.height < platform.y + platformHeight
-    ) {
-      doodle.dy = bounceVelocity;
-      createParticles(doodle.x + doodle.width / 2, doodle.y + doodle.height);
-      handleScoreIncrease(platform);  // Score-Erhöhung nur bei einer neuen Plattform
-    }
-  });
-}
+// Start button event listener
+startButton.addEventListener('click', startGame);
+
+// When the player image has loaded, we can begin rendering the character
+playerImage.onload = function() {
+  isImageLoaded = true;
+};
 
 // Game loop function
 function gameLoop() {
@@ -227,15 +257,6 @@ function gameLoop() {
   doodle.x += doodle.dx;
   doodle.y += doodle.dy;
 
-  // Update player direction based on input
-  if (isLeftPressed) {
-    doodle.dx = -horizontalSpeed;
-  } else if (isRightPressed) {
-    doodle.dx = horizontalSpeed;
-  } else {
-    doodle.dx = 0;  // Stop moving when no key is pressed
-  }
-
   // Camera follows the doodle
   if (doodle.y < canvas.height / 2) {
     const offset = canvas.height / 2 - doodle.y;
@@ -244,14 +265,44 @@ function gameLoop() {
     platforms.forEach(platform => platform.y += offset);
   }
 
-  handlePlatformCollisions();
+  // Platform collision detection and score increase logic
+  platforms.forEach((platform) => {
+    if (
+      doodle.dy > 0 &&
+      doodle.x + doodle.width > platform.x &&
+      doodle.x < platform.x + platformWidth &&
+      doodle.y + doodle.height > platform.y &&
+      doodle.y + doodle.height < platform.y + platformHeight
+    ) {
+      doodle.dy = bounceVelocity;
+      createParticles(doodle.x + doodle.width / 2, doodle.y + doodle.height);
 
+      if (platform.y < doodle.currentPlatformY) {
+        score++;
+        doodle.currentPlatformY = platform.y;
+        scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
+        maxPlatformGap = Math.min(200, maxPlatformGap + 5);
+      }
+    }
+  });
+
+  // Remove off-screen platforms
   platforms = platforms.filter(platform => platform.y < canvas.height);
 
+  // Add new platforms as camera moves up
   if (platforms[platforms.length - 1].y > 0) {
     const newPlatformX = Math.random() * (canvas.width - platformWidth);
     const newPlatformY = platforms[platforms.length - 1].y - platformHeight - Math.random() * maxPlatformGap;
     platforms.push({ x: newPlatformX, y: newPlatformY });
+  }
+
+  // Player movement controls
+  if (isLeftPressed) {
+    doodle.dx = -horizontalSpeed;
+  } else if (isRightPressed) {
+    doodle.dx = horizontalSpeed;
+  } else {
+    doodle.dx = 0;
   }
 
   // Screen wrapping
@@ -261,17 +312,21 @@ function gameLoop() {
     doodle.x = -doodle.width;
   }
 
+  // Render platforms
   platforms.forEach(platform => {
     context.drawImage(platformImage, platform.x, platform.y, platformWidth, platformHeight);
   });
 
+  // Render player character
   if (isImageLoaded) {
     context.drawImage(playerImage, doodle.x, doodle.y, doodle.width, doodle.height);
   }
 
+  // Render particles
   updateParticles();
   renderParticles();
 
+  // End game if doodle falls below the screen
   if (doodle.y - cameraOffsetY > canvas.height) {
     endGame();
     return;
@@ -281,23 +336,6 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
   }
 }
-
-// Start game function 
-function startGame() {
-  canvas.style.display = 'block';
-  instructions.style.display = 'none';
-  scoreboard.style.display = 'block';
-  restartButton.style.display = 'none';
-  resetGame(); // Reset game and start
-}
-
-// Add event listeners
-startButton.addEventListener('click', startGame);
-
-// When the player image has loaded, we can begin rendering the character
-playerImage.onload = function() {
-  isImageLoaded = true;
-};
 
 canvas.style.display = 'none';
 
