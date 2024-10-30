@@ -278,8 +278,8 @@ function gameLoop() {
       doodle.dy > 0 && // Spieler bewegt sich nach unten
       doodle.x + doodle.width > platform.x && // Kollisionsüberprüfung rechts
       doodle.x < platform.x + platformWidth && // Kollisionsüberprüfung links
-      doodle.y + doodle.height > platform.y && // Kollisionsüberprüfung oben
-      doodle.y + doodle.height < platform.y + platformHeight // Kollisionsüberprüfung unten
+      doodle.y + doodle.height >= platform.y && // Spieler ist nahe genug an der Plattformoberkante
+      doodle.y + doodle.height <= platform.y + platformHeight + 10 // Spieler muss fast vollständig auf der Plattform sein
     ) {
       // Wenn der Spieler auf der Plattform landet, springt er
       doodle.dy = bounceVelocity;
