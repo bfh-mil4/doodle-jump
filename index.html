@@ -278,8 +278,8 @@ function gameLoop() {
   platforms.forEach((platform) => {
     if (
       doodle.dy > 0 && // Spieler bewegt sich nach unten
-      doodle.x + doodle.width > platform.x && // Kollisionsüberprüfung rechts
-      doodle.x < platform.x + platformWidth && // Kollisionsüberprüfung links
+      doodle.x + doodle.width > platform.x && // Rechte Seite des Spielers ist rechts von der linken Plattformgrenze
+      doodle.x < platform.x + platformWidth && // Linke Seite des Spielers ist links von der rechten Plattformgrenze
       doodle.y + doodle.height >= platform.y && // Spielerfüße sind mindestens auf der Plattform
       doodle.y + doodle.height <= platform.y + platformHeight // Spielerfüße liegen nicht zu tief unter der Plattform
     ) {
@@ -295,7 +295,7 @@ function gameLoop() {
   // Add new platforms as camera moves up
   if (platforms[platforms.length - 1].y > 0) {
     const newPlatformX = Math.random() * (canvas.width - platformWidth);
-    const newPlatformY = platforms[platforms.length - 1].y - platformHeight - minPlatformGap - Math.random() * (maxPlatformGap - minPlatformGap);
+    const newPlatformY = platforms[platforms.length - 1].y - platformHeight - Math.random() * (maxPlatformGap - minPlatformGap) + minPlatformGap;
     platforms.push({ x: newPlatformX, y: newPlatformY });
   }
 
