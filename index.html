@@ -111,7 +111,8 @@ const platformHeight = 20;
 const gravity = 0.3;
 const bounceVelocity = -12; // Anpassung der Sprunggeschwindigkeit
 const horizontalSpeed = 2;
-let maxPlatformGap = 150; // Maximaler Abstand zwischen Plattformen
+let minPlatformGap = 120; // Minimaler Abstand zwischen Plattformen
+let maxPlatformGap = 200; // Maximaler Abstand zwischen Plattformen
 let gameStarted = false;
 
 // Platforms array
@@ -203,10 +204,10 @@ function resetGame() {
   platforms = [{ x: canvas.width / 2 - platformWidth / 2, y: canvas.height - platformHeight - 10 }]; // Plattformen richtig initialisieren
   cameraOffsetY = 0;
   
-  // Generate initial platforms with a consistent spacing
+  // Generate initial platforms with appropriate gaps
   let platformY = canvas.height - platformHeight - 10;
   while (platformY > 0) {
-    platformY -= platformHeight + Math.random() * maxPlatformGap;
+    platformY -= platformHeight + minPlatformGap + Math.random() * (maxPlatformGap - minPlatformGap);
     const platformX = Math.random() * (canvas.width - platformWidth);
     platforms.push({ x: platformX, y: platformY });
   }
@@ -294,7 +295,7 @@ function gameLoop() {
   // Add new platforms as camera moves up
   if (platforms[platforms.length - 1].y > 0) {
     const newPlatformX = Math.random() * (canvas.width - platformWidth);
-    const newPlatformY = platforms[platforms.length - 1].y - platformHeight - Math.random() * maxPlatformGap;
+    const newPlatformY = platforms[platforms.length - 1].y - platformHeight - minPlatformGap - Math.random() * (maxPlatformGap - minPlatformGap);
     platforms.push({ x: newPlatformX, y: newPlatformY });
   }
 
