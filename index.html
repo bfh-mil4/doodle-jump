@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Doodle Jump - Modern Version</title>
+  <title>Doodle Jump</title>
   <style>
     html, body {
       height: 100%;
@@ -109,9 +109,9 @@ let isImageLoaded = false;
 const platformWidth = 65;
 const platformHeight = 20;
 const gravity = 0.3;
-const bounceVelocity = -12; 
+const bounceVelocity = -12; // Anpassung der Sprunggeschwindigkeit
 const horizontalSpeed = 2;
-let initialPlatformGap = 100; // Startabstand zwischen Plattformen
+let minPlatformGap = 80; // Minimaler Abstand zwischen Plattformen
 let maxPlatformGap = 150; // Maximaler Abstand zwischen Plattformen
 let gameStarted = false;
 
@@ -204,14 +204,14 @@ function resetGame() {
   platforms = [{ x: canvas.width / 2 - platformWidth / 2, y: canvas.height - platformHeight - 10 }]; // Plattformen richtig initialisieren
   cameraOffsetY = 0;
   
-  // Generate initial platforms with increasing gaps
+  // Generate initial platforms with appropriate gaps
   let platformY = canvas.height - platformHeight - 10;
-  let gap = initialPlatformGap;
+  let gap = minPlatformGap;
   while (platformY > 0) {
     platformY -= platformHeight + gap;
     const platformX = Math.random() * (canvas.width - platformWidth);
     platforms.push({ x: platformX, y: platformY });
-    gap = Math.min(gap + 10, maxPlatformGap); // Increase the gap progressively up to the max gap
+    gap = Math.max(minPlatformGap, Math.min(gap + 10, maxPlatformGap)); // Stelle sicher, dass der Abstand immer innerhalb der Grenzen bleibt
   }
   
   gameOver = false;
@@ -297,7 +297,7 @@ function gameLoop() {
   // Add new platforms as camera moves up
   if (platforms[platforms.length - 1].y > 0) {
     const newPlatformX = Math.random() * (canvas.width - platformWidth);
-    const newPlatformY = platforms[platforms.length - 1].y - platformHeight - Math.random() * maxPlatformGap;
+    const newPlatformY = platforms[platforms.length - 1].y - platformHeight - Math.random() * (maxPlatformGap - minPlatformGap) + minPlatformGap;
     platforms.push({ x: newPlatformX, y: newPlatformY });
   }
 
