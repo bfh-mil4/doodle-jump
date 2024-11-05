@@ -122,9 +122,6 @@ function startGame() {
 // Start button event listener
 startButton.addEventListener('click', startGame);
 
-// Restart button event listener
-restartButton.addEventListener('click', resetGame);
-
 // Dein bestehender JavaScript-Code
 const platformWidth = 65;
 const platformHeight = 20;
@@ -189,7 +186,7 @@ function renderParticles() {
 }
 
 document.addEventListener('keydown', (e) => {
-  gameStarted = true;  
+  gameStarted = true;
   if (e.key === 'ArrowLeft') isLeftPressed = true;
   if (e.key === 'ArrowRight') isRightPressed = true;
 });
@@ -268,6 +265,15 @@ function gameLoop() {
   renderParticles();
   if (doodle.y - cameraOffsetY > canvas.height) endGame();
   if (!gameOver) requestAnimationFrame(gameLoop);
+}
+
+function endGame() {
+  gameOver = true;
+  if (score > highscore) {
+    highscore = score;
+  }
+  scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
+  restartButton.style.display = 'block';
 }
 
 canvas.style.display = 'none';
