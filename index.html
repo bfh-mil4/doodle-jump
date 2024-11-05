@@ -278,8 +278,8 @@ function gameLoop() {
   platforms.forEach((platform) => {
     if (
       doodle.dy > 0 && // Spieler bewegt sich nach unten
-      doodle.x + doodle.width > platform.x && // Kollisionsüberprüfung rechts
-      doodle.x < platform.x + platformWidth && // Kollisionsüberprüfung links
+      doodle.x + doodle.width * 0.8 > platform.x && // Kollisionsüberprüfung rechts (schärfere Kante)
+      doodle.x + doodle.width * 0.2 < platform.x + platformWidth && // Kollisionsüberprüfung links (schärfere Kante)
       doodle.y + doodle.height >= platform.y && // Spielerfüße sind mindestens auf der Plattform
       doodle.y + doodle.height <= platform.y + platformHeight // Spielerfüße liegen nicht zu tief unter der Plattform
     ) {
