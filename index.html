@@ -342,6 +342,27 @@ function gameLoop() {
 
 canvas.style.display = 'none';
 
+function sendScore(score) {
+  try {
+    window.parent.postMessage({
+      score: score
+    }, '*');
+  } catch (error) {
+    console.error('Error sending score:', error);
+  }
+}
+
+function endGame() {
+  gameOver = true;
+  if (score > highscore) {
+    highscore = score;
+    // Send score to SharePoint web part
+    sendScore(score);
+  }
+  scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
+  restartButton.style.display = 'block';
+}
+
 </script>
 
 </body>
