@@ -15,9 +15,9 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     canvas {
-      border: 3px solid #00FF00;
-      background-color: #add8e6;
-      box-shadow: 0px 0px 15px 5px rgba(0, 255, 0, 0.75);
+      border: 3px solid #4FC3F7;  
+      background-color: #E1F5FE;  
+      box-shadow: 0px 0px 15px 5px rgba(79, 195, 247, 0.6);  
       width: 100%;
       height: auto;
       max-width: 900px;
@@ -28,8 +28,9 @@
       top: 10px;
       left: 10px;
       font-size: 24px;
-      color: #00FF00;
+      color: #2196F3;  
       font-weight: bold;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);  
     }
     #restart, #startButton {
       display: none;
@@ -39,12 +40,17 @@
       transform: translate(-50%, -50%);
       font-size: 28px;
       padding: 15px 30px;
-      background-color: #28a745;
+      background-color: #2196F3; 
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;  
       cursor: pointer;
-      box-shadow: 0px 0px 10px rgba(0, 255, 0, 0.75);
+      box-shadow: 0px 0px 10px rgba(33, 150, 243, 0.6);  
+      transition: all 0.3s ease; 
+    }
+    #restart:hover, #startButton:hover {
+      background-color: #1976D2; 
+      transform: translate(-50%, -50%) scale(1.05);  
     }
     #restart {
       display: none;
@@ -117,6 +123,21 @@ let gameStarted = false;
 
 // Platforms array
 let platforms = [{ x: canvas.width / 2 - platformWidth / 2, y: canvas.height - platformHeight - 10 }]; // Erste Plattform 10px über dem unteren Rand
+
+// Add after the platforms array
+const powerUps = [];
+const obstacles = [];
+
+// Add new types
+const POWERUP_TYPES = {
+    JETPACK: { type: 'jetpack', duration: 3000, boost: -15 },
+    SPRING: { type: 'spring', boost: -18 }
+};
+
+const OBSTACLE_TYPES = {
+    SPIKE: { type: 'spike', damage: true },
+    MOVING_PLATFORM: { type: 'moving', speed: 2 }
+};
 
 // Player object (the character)
 const doodle = {
@@ -361,6 +382,31 @@ function endGame() {
   }
   scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
   restartButton.style.display = 'block';
+}
+
+// Add to game physics section
+let difficultyLevel = 1;
+const DIFFICULTY_INCREASE_INTERVAL = 1000; // Points needed to increase difficulty
+
+// Add to gameLoop
+if (score > 0 && score % DIFFICULTY_INCREASE_INTERVAL === 0) {
+    difficultyLevel++;
+    minPlatformGap += 10;
+    maxPlatformGap += 15;
+}
+
+function createPowerUpEffect(x, y, color) {
+    for (let i = 0; i < 20; i++) {
+        particles.push({
+            x: x,
+            y: y,
+            dx: (Math.random() - 0.5) * 4,
+            dy: (Math.random() - 0.5) * 4,
+            size: Math.random() * 5 + 2,
+            alpha: 1,
+            color: color
+        });
+    }
 }
 
 </script>
