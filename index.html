@@ -2,368 +2,565 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Doodle Jump</title>
+  <title>Breakout Game</title>
   <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: #282c34;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    canvas {
-      border: 3px solid #00FF00;
-      background-color: #add8e6;
-      box-shadow: 0px 0px 15px 5px rgba(0, 255, 0, 0.75);
+    body, html {
+      background-color: #222;
       width: 100%;
-      height: auto;
-      max-width: 900px;
-      max-height: 1600px;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      margin: 0;
+      font-family: 'Arial', sans-serif;
     }
-    #scoreboard {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      font-size: 24px;
-      color: #00FF00;
-      font-weight: bold;
-    }
-    #restart, #startButton {
-      display: none;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+
+    #gameTitle {
+      color: #FFFAF0;
       font-size: 28px;
-      padding: 15px 30px;
-      background-color: #28a745;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      box-shadow: 0px 0px 10px rgba(0, 255, 0, 0.75);
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 5px #8B0000;
     }
-    #restart {
+
+    #infoText {
+      color: #FFFAF0;
+      font-size: 18px;
+      margin-bottom: 15px;
+      text-shadow: 1px 1px 4px #006400;
+    }
+
+    canvas {
+      image-rendering: pixelated;
+      image-rendering: optimizeSpeed;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: optimize-contrast;
+      border: 3px solid #FFF;
+      background: linear-gradient(#1a1a2e, #16213e);
+      box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.2);
+    }
+
+    #gameOver {
       display: none;
-      top: 70%;
-    }
-    #instructions {
       position: absolute;
-      top: 20%;
-      left: 50%;
-      transform: translateX(-50%);
+      color: white;
+      font-size: 24px;
       text-align: center;
-      font-size: 22px;
-      color: #FFFFFF;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 20px;
+      border-radius: 10px;
     }
-    #instructions h1 {
-      margin-bottom: 20px;
-      color: #00FF00;
-      text-shadow: 0 0 10px rgba(0, 255, 0, 0.75);
-    }
-    #startButton {
-      margin-top: 20px;
-      display: block;
-      position: relative;
-      transform: none;
-      left: 50%;
-      transform: translateX(-50%);
+
+    .powerup {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      pointer-events: none;
     }
   </style>
 </head>
 <body>
+  <div id="gameTitle">🎄 Breakout Game 🎄</div>
+  <div id="infoText">Use arrow keys to move. Press Shift to launch the ball. Break all the blocks to win!</div>
+  <canvas id="game-canvas" width="640" height="640"></canvas>
+  <div id="gameOver"></div>
+  <audio id="hitSound" src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgA"></audio>
+  <audio id="powerupSound" src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgA"></audio>
+  <script>
+    // RequestAnimationFrame shim
+    (function() {
+      var requestAnimationFrame = window.requestAnimationFrame || 
+                                window.mozRequestAnimationFrame || 
+                                window.webkitRequestAnimationFrame || 
+                                window.msRequestAnimationFrame;
+      window.requestAnimationFrame = requestAnimationFrame;
+    })();
 
-<canvas id="gameCanvas" width="375" height="667"></canvas>
-<div id="scoreboard">Score: 0 | Highscore: 0</div>
-<div id="instructions">
-  <h1>Welcome to Doodle Jump!</h1>
-  <p>Control your character with the left and right arrow keys.</p>
-  <p>The higher you jump, the more challenging it gets.</p>
-  <p>Show off your skills!</p>
-  <button id="startButton">Start game</button>
-</div>
-<button id="restart">Try again</button>
+    // Utility functions
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
 
-<script>
-// Setup the canvas and context
-const canvas = document.getElementById('gameCanvas');
-const context = canvas.getContext('2d');
-const scoreboard = document.getElementById('scoreboard');
-const restartButton = document.getElementById('restart');
-const startButton = document.getElementById('startButton');
-const instructions = document.getElementById('instructions');
+    function valueInRange(value, min, max) {
+      return (value <= max) && (value >= min);
+    }
 
-// Load the player character and platform images
-const playerImage = new Image();
-playerImage.src = 'https://i.imgur.com/ufu0i5c.png';  // Neue Bild-URL für den Charakter
-const platformImage = new Image();
-platformImage.src = 'https://i.imgur.com/TThVdcw.png';  // Neue Bild-URL für die Plattform
+    function checkRectCollision(A, B) {
+      var xOverlap = valueInRange(A.x, B.x, B.x + B.w) ||
+                     valueInRange(B.x, A.x, A.x + A.w);
+      var yOverlap = valueInRange(A.y, B.y, B.y + B.h) ||
+                     valueInRange(B.y, A.y, A.y + A.h);
+      return xOverlap && yOverlap;
+    }
 
-// Variable to track if the images are loaded
-let isImageLoaded = false;
+    // Constants
+    const CANVAS_WIDTH = 640;
+    const CANVAS_HEIGHT = 640;
+    const LEFT_KEY = 37;
+    const RIGHT_KEY = 39;
+    const SHIFT_KEY = 16;
+    const BLOCKS_PER_ROW = 10;
+    const BLOCK_ROWS = 6;
+    const BLOCK_WIDTH = CANVAS_WIDTH / BLOCKS_PER_ROW;
+    const BLOCK_COLOURS = ['#FFD700', '#FF4500', '#FF6347', '#FF69B4', '#00FF7F', '#ADD8E6'];
+    const INITIAL_BALL_SPEED = 5;
+    const SPEED_INCREASE_INTERVAL = 5000;
 
-// Game physics and parameters
-const platformWidth = 65;
-const platformHeight = 20;
-const gravity = 0.3;
-const bounceVelocity = -12; // Anpassung der Sprunggeschwindigkeit
-const horizontalSpeed = 2;
-let minPlatformGap = 120; // Minimaler Abstand zwischen Plattformen
-let maxPlatformGap = 200; // Maximaler Abstand zwischen Plattformen
-let gameStarted = false;
+    const PHYSICS = {
+      BALL_SPIN_INFLUENCE: 0.3,
+      MAX_BALL_SPEED: 15,
+      MIN_BALL_SPEED: 4,
+      BALL_DAMPENING: 0.98,
+      GRAVITY: 0.2
+    };
 
-// Platforms array
-let platforms = [{ x: canvas.width / 2 - platformWidth / 2, y: canvas.height - platformHeight - 10 }]; // Erste Plattform 10px über dem unteren Rand
+    const POWERUP_TYPES = {
+      WIDER_PADDLE: { color: '#FFD700', duration: 10000 },
+      SLOWER_BALL: { color: '#87CEEB', duration: 8000 },
+      EXTRA_LIFE: { color: '#FF69B4', duration: 0 }
+    };
 
-// Player object (the character)
-const doodle = {
-  width: 55,
-  height: 55,
-  x: canvas.width / 2 - 20,
-  y: canvas.height - platformHeight - 60, // Spieler wird 60px über der Plattform platziert
-  dx: 0,
-  dy: 0,
-  highestY: canvas.height - platformHeight - 60 // Startposition für die höchste erreichte Position
-};
+    // Particle System
+    class ParticleSystem {
+      constructor() {
+        this.particles = [];
+      }
 
-let score = 0;
-let highscore = 0;
-let gameOver = false;
-let isLeftPressed = false;
-let isRightPressed = false;
-let cameraOffsetY = 0;
+      createExplosion(x, y, color, count = 15, type = 'block') {
+        for (let i = 0; i < count; i++) {
+          const angle = (Math.PI * 2 / count) * i;
+          const speed = type === 'block' ? 2 + Math.random() * 2 : 1 + Math.random();
+          
+          this.particles.push({
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size: type === 'block' ? 3 + Math.random() * 3 : 2 + Math.random() * 2,
+            color: color,
+            life: 1,
+            type: type,
+            gravity: type === 'powerup' ? 0.05 : 0
+          });
+        }
+      }
 
-// Add particle system for jump effects
-let particles = [];
+      update() {
+        this.particles = this.particles.filter(p => p.life > 0);
+        
+        this.particles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += p.gravity;
+          p.life -= p.type === 'block' ? 0.02 : 0.01;
+          
+          if (p.type === 'powerup') {
+            p.vx *= 0.98;
+            p.vy *= 0.98;
+          }
+        });
+      }
 
-function createParticles(x, y) {
-  for (let i = 0; i < 10; i++) {
-    particles.push({
-      x: x,
-      y: y,
-      dx: (Math.random() - 0.5) * 2,
-      dy: (Math.random() - 0.5) * 2,
-      size: Math.random() * 3 + 1,
-      alpha: 1
+      draw(ctx) {
+        this.particles.forEach(p => {
+          ctx.globalAlpha = p.life;
+          ctx.fillStyle = p.color;
+          
+          if (p.type === 'powerup') {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            ctx.fillRect(p.x, p.y, p.size, p.size);
+          }
+        });
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // Globals
+    var canvas = null;
+    var ctx = null;
+    var input = [];
+    var score = 0;
+    var lives = 3;
+    var lastSpeedIncreaseTime = 0;
+    var gameStarted = true;
+    var gameEnded = false;
+    var particleSystem = new ParticleSystem();
+    var powerups = [];
+
+    // Player object
+    var player = {
+      width: 100,
+      height: 10,
+      position: { x: 0, y: 0 },
+      bounds: { x: 0, y: 0, w: 0, h: 0 },
+
+      init: function() {
+        this.position.x = CANVAS_WIDTH / 2 - this.width / 2;
+        this.position.y = CANVAS_HEIGHT - 30;
+      },
+
+      update: function() {
+        if (input[LEFT_KEY]) this.position.x -= 8;
+        if (input[RIGHT_KEY]) this.position.x += 8;
+
+        this.position.x = Math.max(0, Math.min(CANVAS_WIDTH - this.width, this.position.x));
+        this.bounds.x = this.position.x;
+        this.bounds.y = this.position.y;
+        this.bounds.w = this.width;
+        this.bounds.h = this.height;
+      },
+
+      draw: function() {
+        ctx.fillStyle = '#FFFAF0';
+        ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+      }
+    };
+
+    // Ball object
+    var ball = {
+      width: 10,
+      height: 10,
+      position: { x: 0, y: 0 },
+      velocity: { x: 0, y: 0 },
+      bounds: { x: 0, y: 0, w: 0, h: 0 },
+      playerStick: true,
+      spin: 0,
+
+      init: function() {
+        this.position.x = (player.position.x + player.width / 2) - this.width / 2;
+        this.position.y = player.position.y - 15;
+        this.velocity.x = 0;
+        this.velocity.y = 0;
+        this.playerStick = true;
+        this.spin = 0;
+      },
+
+      launch: function() {
+        this.playerStick = false;
+        this.velocity.x = getRandomInt(-3, 3);
+        this.velocity.y = -INITIAL_BALL_SPEED;
+        this.spin = 0;
+      },
+
+      updatePhysics: function() {
+        this.velocity.x += this.spin * PHYSICS.BALL_SPIN_INFLUENCE;
+        this.velocity.x *= PHYSICS.BALL_DAMPENING;
+        this.velocity.y *= PHYSICS.BALL_DAMPENING;
+        
+        let speed = Math.hypot(this.velocity.x, this.velocity.y);
+        if (speed > PHYSICS.MAX_BALL_SPEED) {
+          this.velocity.x *= PHYSICS.MAX_BALL_SPEED / speed;
+          this.velocity.y *= PHYSICS.MAX_BALL_SPEED / speed;
+        } else if (speed < PHYSICS.MIN_BALL_SPEED) {
+          this.velocity.x *= PHYSICS.MIN_BALL_SPEED / speed;
+          this.velocity.y *= PHYSICS.MIN_BALL_SPEED / speed;
+        }
+      },
+
+      update: function() {
+        if (this.playerStick) {
+          this.position.x = (player.position.x + player.width / 2) - this.width / 2;
+          this.position.y = player.position.y - 15;
+        } else {
+          this.updatePhysics();
+          this.position.x += this.velocity.x;
+          this.position.y += this.velocity.y;
+
+          if (this.position.x < 0 || this.position.x > CANVAS_WIDTH - this.width) {
+            this.velocity.x *= -1;
+            this.spin *= -0.5;
+          }
+          if (this.position.y < 0) {
+            this.velocity.y *= -1;
+            this.spin *= 0.5;
+          }
+
+          if (checkRectCollision(this.bounds, player.bounds)) {
+            this.velocity.y = -Math.abs(this.velocity.y);
+            let hitX = (this.position.x + this.width/2) - (player.position.x + player.width/2);
+            let normalizedHitX = hitX / (player.width/2);
+            this.spin = normalizedHitX * 0.2;
+            this.velocity.x = normalizedHitX * 8;
+          }
+
+          if (this.position.y > CANVAS_HEIGHT) {
+            lives--;
+            this.playerStick = true;
+            if (lives === 0) endGame();
+          }
+        }
+
+        this.bounds.x = this.position.x;
+        this.bounds.y = this.position.y;
+        this.bounds.w = this.width;
+        this.bounds.h = this.height;
+      },
+
+      draw: function() {
+        ctx.fillStyle = '#ff0000';
+        ctx.beginPath();
+        ctx.arc(this.position.x + this.width / 2, this.position.y + this.height / 2, this.width / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    };
+
+    // Block class
+    var Block = function(x, y, color) {
+      this.position = { x: x, y: y };
+      this.width = BLOCK_WIDTH;
+      this.height = 25;
+      this.bounds = { x: x, y: y, w: BLOCK_WIDTH, h: 25 };
+      this.color = color;
+      this.hit = false;
+    };
+
+    Block.prototype.checkCollision = function() {
+      if (checkRectCollision(this.bounds, ball.bounds) && !this.hit) {
+        this.hit = true;
+        ball.velocity.y *= -1;
+        score += 10;
+        
+        particleSystem.createExplosion(
+          this.position.x + this.width/2,
+          this.position.y + this.height/2,
+          this.color
+        );
+
+        if (Math.random() < 0.2) {
+          const types = Object.keys(POWERUP_TYPES);
+          const randomType = types[Math.floor(Math.random() * types.length)];
+          powerups.push({
+            x: this.position.x + this.width/2,
+            y: this.position.y + this.height/2,
+            type: randomType,
+            width: 20,
+            height: 20,
+            speed: 2
+          });
+          
+          particleSystem.createExplosion(
+            this.position.x + this.width/2,
+            this.position.y + this.height/2,
+            POWERUP_TYPES[randomType].color,
+            10,
+            'powerup'
+          );
+        }
+
+        document.getElementById('hitSound').play();
+        return true;
+      }
+      return false;
+    };
+
+    Block.prototype.draw = function() {
+      ctx.fillStyle = this.color;
+      ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+    };
+        // Wall object
+        var wall = {
+      blocks: [],
+      moveDownInterval: 10000,
+      lastMoveTime: 0,
+
+      init: function() {
+        this.blocks = [];
+        this.addNewRow();
+      },
+
+      addNewRow: function() {
+        this.blocks.forEach(block => {
+          block.position.y += 25;
+          block.bounds.y += 25;
+        });
+
+        for (var c = 0; c < BLOCKS_PER_ROW; c++) {
+          var block = new Block(
+            c * BLOCK_WIDTH, 
+            0, 
+            BLOCK_COLOURS[Math.floor(Math.random() * BLOCK_COLOURS.length)]
+          );
+          this.blocks.unshift(block);
+        }
+        this.lastMoveTime = Date.now();
+      },
+
+      update: function() {
+        if (Date.now() - this.lastMoveTime > this.moveDownInterval) {
+          this.addNewRow();
+        }
+
+        if (this.blocks.some(block => block.position.y + block.height >= player.position.y)) {
+          endGame();
+          return;
+        }
+
+        this.blocks.forEach(block => block.checkCollision());
+        this.blocks = this.blocks.filter(block => !block.hit);
+      },
+
+      draw: function() {
+        this.blocks.forEach(block => block.draw());
+      }
+    };
+
+    // Power-up management
+    function updatePowerups() {
+      powerups.forEach((powerup, index) => {
+        powerup.y += powerup.speed;
+        
+        if (checkRectCollision(
+          { x: powerup.x - powerup.width/2, y: powerup.y - powerup.height/2, w: powerup.width, h: powerup.height },
+          player.bounds
+        )) {
+          activatePowerup(powerup.type);
+          powerups.splice(index, 1);
+          document.getElementById('powerupSound').play();
+        }
+        
+        if (powerup.y > CANVAS_HEIGHT) {
+          powerups.splice(index, 1);
+        }
+      });
+    }
+
+    function activatePowerup(type) {
+      switch(type) {
+        case 'WIDER_PADDLE':
+          const originalWidth = player.width;
+          player.width *= 1.5;
+          setTimeout(() => player.width = originalWidth, POWERUP_TYPES[type].duration);
+          break;
+        case 'SLOWER_BALL':
+          const speed = Math.hypot(ball.velocity.x, ball.velocity.y);
+          ball.velocity.x *= 0.5;
+          ball.velocity.y *= 0.5;
+          setTimeout(() => {
+            const currentSpeed = Math.hypot(ball.velocity.x, ball.velocity.y);
+            const scale = speed / currentSpeed;
+            ball.velocity.x *= scale;
+            ball.velocity.y *= scale;
+          }, POWERUP_TYPES[type].duration);
+          break;
+        case 'EXTRA_LIFE':
+          lives++;
+          break;
+      }
+    }
+
+    function drawPowerups() {
+      powerups.forEach(powerup => {
+        ctx.fillStyle = POWERUP_TYPES[powerup.type].color;
+        ctx.beginPath();
+        ctx.arc(powerup.x, powerup.y, powerup.width/2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    // Game management functions
+    function initCanvas() {
+      canvas = document.getElementById('game-canvas');
+      ctx = canvas.getContext('2d');
+      document.addEventListener('keydown', e => input[e.keyCode] = true);
+      document.addEventListener('keyup', e => input[e.keyCode] = false);
+    }
+
+    function endGame(won = false) {
+      if (!gameEnded) {
+        gameEnded = true;
+        gameStarted = false;
+        
+        const gameOverDiv = document.getElementById('gameOver');
+        gameOverDiv.style.display = 'block';
+        gameOverDiv.innerHTML = `
+          ${won ? 'Congratulations! You won!' : 'Game Over!'}<br>
+          Final Score: ${score}<br>
+          Press Space to play again
+        `;
+
+        document.addEventListener('keydown', function spaceHandler(e) {
+          if (e.keyCode === 32) { // Space key
+            document.removeEventListener('keydown', spaceHandler);
+            gameOverDiv.style.display = 'none';
+            resetGame();
+            startGame();
+          }
+        });
+      }
+    }
+
+    function resetGame() {
+      score = 0;
+      lives = 3;
+      gameEnded = false;
+      input = [];
+      powerups = [];
+      lastSpeedIncreaseTime = Date.now();
+      player.init();
+      ball.init();
+      wall.init();
+    }
+
+    function startGame() {
+      gameStarted = true;
+      animate();
+    }
+
+    function increaseDifficulty() {
+      if (Date.now() - lastSpeedIncreaseTime > SPEED_INCREASE_INTERVAL) {
+        wall.moveDownInterval = Math.max(5000, wall.moveDownInterval - 500);
+        lastSpeedIncreaseTime = Date.now();
+      }
+    }
+
+    function animate() {
+      if (!gameStarted) return;
+
+      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+      particleSystem.update();
+      particleSystem.draw(ctx);
+      
+      updatePowerups();
+      player.update();
+      ball.update();
+      wall.update();
+      increaseDifficulty();
+
+      wall.draw();
+      drawPowerups();
+      player.draw();
+      ball.draw();
+
+      ctx.font = '16px Arial';
+      ctx.fillStyle = 'white';
+      ctx.fillText(`Score: ${score}`, 10, CANVAS_HEIGHT - 10);
+      ctx.fillText(`Lives: ${lives}`, CANVAS_WIDTH - 70, CANVAS_HEIGHT - 10);
+
+      requestAnimationFrame(animate);
+    }
+
+    // Event listeners
+    document.addEventListener('keydown', (e) => {
+      if (e.keyCode === SHIFT_KEY && ball.playerStick && lives > 0) {
+        ball.launch();
+      }
     });
-  }
-}
 
-function updateParticles() {
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const particle = particles[i];
-    particle.x += particle.dx;
-    particle.y += particle.dy;
-    particle.alpha -= 0.02;
-    if (particle.alpha <= 0) {
-      particles.splice(i, 1);
-    }
-  }
-}
-
-function renderParticles() {
-  context.fillStyle = 'rgba(255, 255, 255, 0.8)';
-  particles.forEach(particle => {
-    context.globalAlpha = particle.alpha;
-    context.beginPath();
-    context.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-    context.fill();
-  });
-  context.globalAlpha = 1;
-}
-
-// Keydown and keyup events for player movement
-document.addEventListener('keydown', (e) => {
-  gameStarted = true;  
-  if (e.key === 'ArrowLeft') {
-    isLeftPressed = true;
-  } else if (e.key === 'ArrowRight') {
-    isRightPressed = true;
-  }
-});
-
-document.addEventListener('keyup', (e) => {
-  if (e.key === 'ArrowLeft') {
-    isLeftPressed = false;
-  } else if (e.key === 'ArrowRight') {
-    isRightPressed = false;
-  }
-});
-
-// Function to reset the game
-function resetGame() {
-  score = 0;
-  gameStarted = false; 
-  doodle.x = canvas.width / 2 - 20;
-  doodle.y = canvas.height - platformHeight - 60; // Spieler wird 60px über der Plattform platziert
-  doodle.dy = 0;
-  doodle.highestY = canvas.height - platformHeight - 60;
-  platforms = [{ x: canvas.width / 2 - platformWidth / 2, y: canvas.height - platformHeight - 10 }]; // Plattformen richtig initialisieren
-  cameraOffsetY = 0;
-  
-  // Generate initial platforms with appropriate gaps
-  let platformY = canvas.height - platformHeight - 10;
-  while (platformY > 0) {
-    platformY -= platformHeight + minPlatformGap + Math.random() * (maxPlatformGap - minPlatformGap);
-    const platformX = Math.random() * (canvas.width - platformWidth);
-    platforms.push({ x: platformX, y: platformY });
-  }
-  
-  gameOver = false;
-  restartButton.style.display = 'none';
-  requestAnimationFrame(gameLoop);
-}
-
-// Function to end the game
-function endGame() {
-  gameOver = true;
-  if (score > highscore) {
-    highscore = score;
-  }
-  scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
-  restartButton.style.display = 'block';
-}
-
-// Restart button event listener
-restartButton.addEventListener('click', resetGame);
-
-// Function to start the game
-function startGame() {
-  canvas.style.display = 'block';
-  instructions.style.display = 'none';
-  scoreboard.style.display = 'block';
-  restartButton.style.display = 'none';
-  resetGame();
-}
-
-// Start button event listener
-startButton.addEventListener('click', startGame);
-
-// When the player image has loaded, we can begin rendering the character
-playerImage.onload = function() {
-  isImageLoaded = true;
-};
-
-// Game loop function
-function gameLoop() {
-  context.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Apply gravity to the player only after game starts
-  if (gameStarted) {
-    doodle.dy += gravity;
-  }
-  
-  doodle.x += doodle.dx;
-  doodle.y += doodle.dy;
-
-  // Camera follows the doodle
-  if (doodle.y < canvas.height / 2) {
-    const offset = canvas.height / 2 - doodle.y;
-    cameraOffsetY += offset;
-    doodle.y = canvas.height / 2;
-    platforms.forEach(platform => platform.y += offset);
-  }
-
-  // Increase score if doodle moves above the previous highest Y position
-  if (cameraOffsetY > doodle.highestY) {
-    score++;
-    doodle.highestY = cameraOffsetY; // Update the highest Y
-    scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
-  }
-
-  // Platform collision detection and bounce
-  platforms.forEach((platform) => {
-    if (
-      doodle.dy > 0 && // Spieler bewegt sich nach unten
-      doodle.x + doodle.width * 0.8 > platform.x && // Kollisionsüberprüfung rechts (schärfere Kante)
-      doodle.x + doodle.width * 0.2 < platform.x + platformWidth && // Kollisionsüberprüfung links (schärfere Kante)
-      doodle.y + doodle.height >= platform.y && // Spielerfüße sind mindestens auf der Plattform
-      doodle.y + doodle.height <= platform.y + platformHeight // Spielerfüße liegen nicht zu tief unter der Plattform
-    ) {
-      // Wenn der Spieler auf der Plattform landet, springt er
-      doodle.dy = bounceVelocity;
-      createParticles(doodle.x + doodle.width / 2, doodle.y + doodle.height);
-    }
-  });
-
-  // Remove off-screen platforms
-  platforms = platforms.filter(platform => platform.y < canvas.height);
-
-  // Add new platforms as camera moves up
-  if (platforms[platforms.length - 1].y > 0) {
-    const newPlatformX = Math.random() * (canvas.width - platformWidth);
-    const newPlatformY = platforms[platforms.length - 1].y - platformHeight - minPlatformGap - Math.random() * (maxPlatformGap - minPlatformGap);
-    platforms.push({ x: newPlatformX, y: newPlatformY });
-  }
-
-  // Player movement controls
-  if (isLeftPressed) {
-    doodle.dx = -horizontalSpeed;
-  } else if (isRightPressed) {
-    doodle.dx = horizontalSpeed;
-  } else {
-    doodle.dx = 0;
-  }
-
-  // Screen wrapping
-  if (doodle.x + doodle.width < 0) {
-    doodle.x = canvas.width;
-  } else if (doodle.x > canvas.width) {
-    doodle.x = -doodle.width;
-  }
-
-  // Render platforms
-  platforms.forEach(platform => {
-    context.drawImage(platformImage, platform.x, platform.y, platformWidth, platformHeight);
-  });
-
-  // Render player character
-  if (isImageLoaded) {
-    context.drawImage(playerImage, doodle.x, doodle.y, doodle.width, doodle.height);
-  }
-
-  // Render particles
-  updateParticles();
-  renderParticles();
-
-  // End game if doodle falls below the screen
-  if (doodle.y - cameraOffsetY > canvas.height) {
-    endGame();
-    return;
-  }
-
-  if (!gameOver) {
-    requestAnimationFrame(gameLoop);
-  }
-}
-
-canvas.style.display = 'none';
-
-function sendScore(score) {
-  try {
-    window.parent.postMessage({
-      score: score
-    }, '*');
-  } catch (error) {
-    console.error('Error sending score:', error);
-  }
-}
-
-function endGame() {
-  gameOver = true;
-  if (score > highscore) {
-    highscore = score;
-    // Send score to SharePoint web part
-    sendScore(score);
-  }
-  scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
-  restartButton.style.display = 'block';
-}
-
-</script>
-
+    // Initialize game
+    window.onload = function() {
+      initCanvas();
+      resetGame();
+      startGame();
+    };
+  </script>
 </body>
 </html>
