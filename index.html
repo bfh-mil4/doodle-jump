@@ -236,7 +236,7 @@ function resetGame() {
   doodle.y = canvas.height - platformHeight - 60; // Spieler wird 60px über der Plattform platziert
   doodle.dy = 0;
   doodle.highestY = canvas.height - platformHeight - 60;
-  platforms = [createPlatform(canvas.width / 2 - platformWidth / 2, canvas.height - platformHeight - 10)];
+  platforms = [createPlatform(canvas.width / 2 - platformWidth / 2, canvas.height - platformHeight - 10, true)];
   cameraOffsetY = 0;
   
   // Generate initial platforms with appropriate gaps
@@ -244,7 +244,7 @@ function resetGame() {
   while (platformY > 0) {
     platformY -= platformHeight + minPlatformGap + Math.random() * (maxPlatformGap - minPlatformGap);
     const platformX = Math.random() * (canvas.width - platformWidth);
-    platforms.push(createPlatform(platformX, platformY));
+    platforms.push(createPlatform(platformX, platformY, false));
   }
   
   gameOver = false;
@@ -348,7 +348,7 @@ function gameLoop() {
   if (platforms[platforms.length - 1].y > 0) {
     const newPlatformX = Math.random() * (canvas.width - platformWidth);
     const newPlatformY = platforms[platforms.length - 1].y - platformHeight - minPlatformGap - Math.random() * (maxPlatformGap - minPlatformGap);
-    platforms.push(createPlatform(newPlatformX, newPlatformY));
+    platforms.push(createPlatform(newPlatformX, newPlatformY, false));
   }
 
   // Player movement controls
@@ -416,14 +416,70 @@ function endGame() {
 }
 
 // Add after the platforms array definition
-function createPlatform(x, y) {
+function createPlatform(x, y, isFirst = false) {
     return {
         x: x,
         y: y,
-        isMoving: Math.random() < 0.2, // 20% chance for moving platform
+        isMoving: isFirst ? false : Math.random() < 0.2, // First platform never moves
         direction: 1,
         speed: 1.5
     };
+}
+
+// Add difficulty variables after the game physics section
+let difficultyLevel = 1;
+const DIFFICULTY_INCREASE_INTERVAL = 500; // Increase difficulty every 500 points
+let platformSpawnChance = 0.2; // Initial chance for moving platforms
+
+// Modify the platform creation in resetGame function
+function resetGame() {
+    score = 0;
+    gameStarted = false;
+    difficultyLevel = 1;
+    platformSpawnChance = 0.2;
+    
+    doodle.x = canvas.width / 2 - 20;
+    doodle.y = canvas.height - platformHeight - 60;
+    doodle.dy = 0;
+    doodle.highestY = canvas.height - platformHeight - 60;
+    
+    // Create first platform as static
+    platforms = [createPlatform(canvas.width / 2 - platformWidth / 2, canvas.height - platformHeight - 10, true)];
+    cameraOffsetY = 0;
+    
+    // Generate initial platforms
+    let platformY = canvas.height - platformHeight - 10;
+    while (platformY > 0) {
+        platformY -= platformHeight + minPlatformGap + Math.random() * (maxPlatformGap - minPlatformGap);
+        const platformX = Math.random() * (canvas.width - platformWidth);
+        platforms.push(createPlatform(platformX, platformY, false));
+    }
+    
+    gameOver = false;
+    restartButton.style.display = 'none';
+    requestAnimationFrame(gameLoop);
+}
+
+// Modify the score increase section in gameLoop to add progressive difficulty
+if (cameraOffsetY > doodle.highestY) {
+    score++;
+    doodle.highestY = cameraOffsetY;
+    
+    // Increase difficulty every DIFFICULTY_INCREASE_INTERVAL points
+    if (score > 0 && score % DIFFICULTY_INCREASE_INTERVAL === 0) {
+        difficultyLevel++;
+        platformSpawnChance = Math.min(0.4, 0.2 + (difficultyLevel - 1) * 0.05); // Increase moving platform chance up to 40%
+        minPlatformGap = Math.min(200, 120 + (difficultyLevel - 1) * 10); // Increase gap between platforms
+    }
+    
+    scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
+}
+
+// Update the platform generation in gameLoop to use the current platformSpawnChance
+if (platforms[platforms.length - 1].y > 0) {
+    const newPlatformX = Math.random() * (canvas.width - platformWidth);
+    const newPlatformY = platforms[platforms.length - 1].y - platformHeight - minPlatformGap - Math.random() * (maxPlatformGap - minPlatformGap);
+    platforms.push(createPlatform(newPlatformX, newPlatformY, false));
 }
 
 </script>
