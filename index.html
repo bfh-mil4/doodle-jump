@@ -244,7 +244,7 @@ function resetGame() {
   while (platformY > 0) {
     platformY -= platformHeight + minPlatformGap + Math.random() * (maxPlatformGap - minPlatformGap);
     const platformX = Math.random() * (canvas.width - platformWidth);
-    platforms.push({ x: platformX, y: platformY });
+    platforms.push(createPlatform(platformX, platformY));
   }
   
   gameOver = false;
@@ -304,6 +304,9 @@ function gameLoop() {
   if (gameStarted) {
     doodle.dy += gravity;
   }
+  
+  // Add this line to update platform positions
+  updatePlatforms();
   
   doodle.x += doodle.dx;
   doodle.y += doodle.dy;
@@ -410,31 +413,6 @@ function endGame() {
   }
   scoreboard.innerText = `Score: ${score} | Highscore: ${highscore}`;
   restartButton.style.display = 'block';
-}
-
-// Add to game physics section
-let difficultyLevel = 1;
-const DIFFICULTY_INCREASE_INTERVAL = 1000; // Points needed to increase difficulty
-
-// Add to gameLoop
-if (score > 0 && score % DIFFICULTY_INCREASE_INTERVAL === 0) {
-    difficultyLevel++;
-    minPlatformGap += 10;
-    maxPlatformGap += 15;
-}
-
-function createPowerUpEffect(x, y, color) {
-    for (let i = 0; i < 20; i++) {
-        particles.push({
-            x: x,
-            y: y,
-            dx: (Math.random() - 0.5) * 4,
-            dy: (Math.random() - 0.5) * 4,
-            size: Math.random() * 5 + 2,
-            alpha: 1,
-            color: color
-        });
-    }
 }
 
 // Add after the platforms array definition
