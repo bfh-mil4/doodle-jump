@@ -234,7 +234,7 @@ function resetGame() {
   doodle.y = canvas.height - platformHeight - 60; // Spieler wird 60px über der Plattform platziert
   doodle.dy = 0;
   doodle.highestY = canvas.height - platformHeight - 60;
-  platforms = [{ x: canvas.width / 2 - platformWidth / 2, y: canvas.height - platformHeight - 10 }]; // Plattformen richtig initialisieren
+  platforms = [createPlatform(canvas.width / 2 - platformWidth / 2, canvas.height - platformHeight - 10)];
   cameraOffsetY = 0;
   
   // Generate initial platforms with appropriate gaps
@@ -279,6 +279,20 @@ startButton.addEventListener('click', startGame);
 playerImage.onload = function() {
   isImageLoaded = true;
 };
+
+// Add before the gameLoop function
+function updatePlatforms() {
+    platforms.forEach(platform => {
+        if (platform.isMoving) {
+            platform.x += platform.direction * platform.speed;
+            
+            // Reverse direction at screen edges
+            if (platform.x <= 0 || platform.x + platformWidth >= canvas.width) {
+                platform.direction *= -1;
+            }
+        }
+    });
+}
 
 // Game loop function
 function gameLoop() {
@@ -329,7 +343,7 @@ function gameLoop() {
   if (platforms[platforms.length - 1].y > 0) {
     const newPlatformX = Math.random() * (canvas.width - platformWidth);
     const newPlatformY = platforms[platforms.length - 1].y - platformHeight - minPlatformGap - Math.random() * (maxPlatformGap - minPlatformGap);
-    platforms.push({ x: newPlatformX, y: newPlatformY });
+    platforms.push(createPlatform(newPlatformX, newPlatformY));
   }
 
   // Player movement controls
@@ -419,6 +433,17 @@ function createPowerUpEffect(x, y, color) {
             color: color
         });
     }
+}
+
+// Add after the platforms array definition
+function createPlatform(x, y) {
+    return {
+        x: x,
+        y: y,
+        isMoving: Math.random() < 0.2, // 20% chance for moving platform
+        direction: 1,
+        speed: 1.5
+    };
 }
 
 </script>
