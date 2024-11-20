@@ -158,13 +158,10 @@ const doodle = {
   width: 55,
   height: 55,
   x: canvas.width / 2 - 20,
-  y: canvas.height - platformHeight - 60,
+  y: canvas.height - platformHeight - 60, // Spieler wird 60px über der Plattform platziert
   dx: 0,
   dy: 0,
-  acceleration: 0.4,     
-  maxSpeed: 6,          
-  friction: 0.92,      
-  highestY: canvas.height - platformHeight - 60
+  highestY: canvas.height - platformHeight - 60 // Startposition für die höchste erreichte Position
 };
 
 let score = 0;
@@ -218,30 +215,16 @@ document.addEventListener('keydown', (e) => {
   gameStarted = true;  
   if (e.key === 'ArrowLeft') {
     isLeftPressed = true;
-    if (doodle.dx > 0) {
-      doodle.dx *= 0.8; 
-    }
-    doodle.dx -= doodle.acceleration;
-    doodle.dx = Math.max(doodle.dx, -doodle.maxSpeed);
   } else if (e.key === 'ArrowRight') {
     isRightPressed = true;
-    if (doodle.dx < 0) {
-      doodle.dx *= 0.8;
-    }
-    doodle.dx += doodle.acceleration;
-    doodle.dx = Math.min(doodle.dx, doodle.maxSpeed);
   }
 });
 
 document.addEventListener('keyup', (e) => {
   if (e.key === 'ArrowLeft') {
     isLeftPressed = false;
-    doodle.holdTime = 0;
-    doodle.acceleration = doodle.baseAcceleration;
   } else if (e.key === 'ArrowRight') {
     isRightPressed = false;
-    doodle.holdTime = 0;
-    doodle.acceleration = doodle.baseAcceleration;
   }
 });
 
@@ -370,15 +353,13 @@ function gameLoop() {
 
   // Player movement controls
   if (isLeftPressed) {
-  doodle.dx -= doodle.acceleration * (1 - Math.abs(doodle.dx) / doodle.maxSpeed * 0.5); // Progressive acceleration
-  doodle.dx = Math.max(doodle.dx, -doodle.maxSpeed);
-} else if (isRightPressed) {
-  doodle.dx += doodle.acceleration * (1 - Math.abs(doodle.dx) / doodle.maxSpeed * 0.5); // Progressive acceleration
-  doodle.dx = Math.min(doodle.dx, doodle.maxSpeed);
-} else {
-  doodle.dx *= doodle.friction;
-  if (Math.abs(doodle.dx) < 0.1) doodle.dx = 0;
-}
+    doodle.dx = -horizontalSpeed;
+  } else if (isRightPressed) {
+    doodle.dx = horizontalSpeed;
+  } else {
+    doodle.dx = 0;
+  }
+
   // Screen wrapping
   if (doodle.x + doodle.width < 0) {
     doodle.x = canvas.width;
