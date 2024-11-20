@@ -130,7 +130,7 @@ const platformWidth = 65;
 const platformHeight = 20;
 const gravity = 0.3;
 const bounceVelocity = -12; 
-const horizontalSpeed = 2;
+const horizontalSpeed = 5;
 let minPlatformGap = 120;
 let maxPlatformGap = 200; 
 let gameStarted = false;
@@ -158,10 +158,13 @@ const doodle = {
   width: 55,
   height: 55,
   x: canvas.width / 2 - 20,
-  y: canvas.height - platformHeight - 60, // Spieler wird 60px über der Plattform platziert
+  y: canvas.height - platformHeight - 60,
   dx: 0,
   dy: 0,
-  highestY: canvas.height - platformHeight - 60 // Startposition für die höchste erreichte Position
+  acceleration: 0.8,    
+  maxSpeed: 8,         
+  friction: 0.85,       
+  highestY: canvas.height - platformHeight - 60
 };
 
 let score = 0;
@@ -215,8 +218,12 @@ document.addEventListener('keydown', (e) => {
   gameStarted = true;  
   if (e.key === 'ArrowLeft') {
     isLeftPressed = true;
+    doodle.dx -= doodle.acceleration;
+    doodle.dx = Math.max(doodle.dx, -doodle.maxSpeed);
   } else if (e.key === 'ArrowRight') {
     isRightPressed = true;
+    doodle.dx += doodle.acceleration;
+    doodle.dx = Math.min(doodle.dx, doodle.maxSpeed);
   }
 });
 
@@ -353,11 +360,14 @@ function gameLoop() {
 
   // Player movement controls
   if (isLeftPressed) {
-    doodle.dx = -horizontalSpeed;
+    doodle.dx -= doodle.acceleration;
+    doodle.dx = Math.max(doodle.dx, -doodle.maxSpeed);
   } else if (isRightPressed) {
-    doodle.dx = horizontalSpeed;
+    doodle.dx += doodle.acceleration;
+    doodle.dx = Math.min(doodle.dx, doodle.maxSpeed);
   } else {
-    doodle.dx = 0;
+    doodle.dx *= doodle.friction;
+    if (Math.abs(doodle.dx) < 0.1) doodle.dx = 0;
   }
 
   // Screen wrapping
