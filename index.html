@@ -161,9 +161,12 @@ const doodle = {
   y: canvas.height - platformHeight - 60,
   dx: 0,
   dy: 0,
-  acceleration: 0.8,    
-  maxSpeed: 8,         
-  friction: 0.85,       
+  acceleration: 0.8,
+  maxSpeed: 12,          
+  friction: 0.85,
+  holdTime: 0,          
+  maxHoldTime: 20,       
+  baseAcceleration: 0.8, 
   highestY: canvas.height - platformHeight - 60
 };
 
@@ -218,10 +221,12 @@ document.addEventListener('keydown', (e) => {
   gameStarted = true;  
   if (e.key === 'ArrowLeft') {
     isLeftPressed = true;
+    doodle.acceleration = doodle.baseAcceleration * (1 + (doodle.holdTime / doodle.maxHoldTime));
     doodle.dx -= doodle.acceleration;
     doodle.dx = Math.max(doodle.dx, -doodle.maxSpeed);
   } else if (e.key === 'ArrowRight') {
     isRightPressed = true;
+    doodle.acceleration = doodle.baseAcceleration * (1 + (doodle.holdTime / doodle.maxHoldTime));
     doodle.dx += doodle.acceleration;
     doodle.dx = Math.min(doodle.dx, doodle.maxSpeed);
   }
@@ -230,8 +235,12 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('keyup', (e) => {
   if (e.key === 'ArrowLeft') {
     isLeftPressed = false;
+    doodle.holdTime = 0;
+    doodle.acceleration = doodle.baseAcceleration;
   } else if (e.key === 'ArrowRight') {
     isRightPressed = false;
+    doodle.holdTime = 0;
+    doodle.acceleration = doodle.baseAcceleration;
   }
 });
 
@@ -360,12 +369,18 @@ function gameLoop() {
 
   // Player movement controls
   if (isLeftPressed) {
+    doodle.holdTime = Math.min(doodle.holdTime + 1, doodle.maxHoldTime);
+    doodle.acceleration = doodle.baseAcceleration * (1 + (doodle.holdTime / doodle.maxHoldTime));
     doodle.dx -= doodle.acceleration;
     doodle.dx = Math.max(doodle.dx, -doodle.maxSpeed);
   } else if (isRightPressed) {
+    doodle.holdTime = Math.min(doodle.holdTime + 1, doodle.maxHoldTime);
+    doodle.acceleration = doodle.baseAcceleration * (1 + (doodle.holdTime / doodle.maxHoldTime));
     doodle.dx += doodle.acceleration;
     doodle.dx = Math.min(doodle.dx, doodle.maxSpeed);
   } else {
+    doodle.holdTime = 0;
+    doodle.acceleration = doodle.baseAcceleration;
     doodle.dx *= doodle.friction;
     if (Math.abs(doodle.dx) < 0.1) doodle.dx = 0;
   }
