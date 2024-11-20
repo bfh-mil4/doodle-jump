@@ -161,12 +161,9 @@ const doodle = {
   y: canvas.height - platformHeight - 60,
   dx: 0,
   dy: 0,
-  acceleration: 0.4,
-  maxSpeed: 8,          
-  friction: 0.92,
-  holdTime: 0,          
-  maxHoldTime: 20,       
-  baseAcceleration: 0.8, 
+  acceleration: 0.4,     
+  maxSpeed: 6,          
+  friction: 0.92,      
   highestY: canvas.height - platformHeight - 60
 };
 
@@ -221,12 +218,16 @@ document.addEventListener('keydown', (e) => {
   gameStarted = true;  
   if (e.key === 'ArrowLeft') {
     isLeftPressed = true;
-    doodle.acceleration = doodle.baseAcceleration * (1 + (doodle.holdTime / doodle.maxHoldTime));
+    if (doodle.dx > 0) {
+      doodle.dx *= 0.8; 
+    }
     doodle.dx -= doodle.acceleration;
     doodle.dx = Math.max(doodle.dx, -doodle.maxSpeed);
   } else if (e.key === 'ArrowRight') {
     isRightPressed = true;
-    doodle.acceleration = doodle.baseAcceleration * (1 + (doodle.holdTime / doodle.maxHoldTime));
+    if (doodle.dx < 0) {
+      doodle.dx *= 0.8;
+    }
     doodle.dx += doodle.acceleration;
     doodle.dx = Math.min(doodle.dx, doodle.maxSpeed);
   }
@@ -369,22 +370,15 @@ function gameLoop() {
 
   // Player movement controls
   if (isLeftPressed) {
-    doodle.holdTime = Math.min(doodle.holdTime + 1, doodle.maxHoldTime);
-    doodle.acceleration = doodle.baseAcceleration * (1 + (doodle.holdTime / doodle.maxHoldTime));
-    doodle.dx -= doodle.acceleration;
-    doodle.dx = Math.max(doodle.dx, -doodle.maxSpeed);
-  } else if (isRightPressed) {
-    doodle.holdTime = Math.min(doodle.holdTime + 1, doodle.maxHoldTime);
-    doodle.acceleration = doodle.baseAcceleration * (1 + (doodle.holdTime / doodle.maxHoldTime));
-    doodle.dx += doodle.acceleration;
-    doodle.dx = Math.min(doodle.dx, doodle.maxSpeed);
-  } else {
-    doodle.holdTime = 0;
-    doodle.acceleration = doodle.baseAcceleration;
-    doodle.dx *= doodle.friction;
-    if (Math.abs(doodle.dx) < 0.1) doodle.dx = 0;
-  }
-
+  doodle.dx -= doodle.acceleration * (1 - Math.abs(doodle.dx) / doodle.maxSpeed * 0.5); // Progressive acceleration
+  doodle.dx = Math.max(doodle.dx, -doodle.maxSpeed);
+} else if (isRightPressed) {
+  doodle.dx += doodle.acceleration * (1 - Math.abs(doodle.dx) / doodle.maxSpeed * 0.5); // Progressive acceleration
+  doodle.dx = Math.min(doodle.dx, doodle.maxSpeed);
+} else {
+  doodle.dx *= doodle.friction;
+  if (Math.abs(doodle.dx) < 0.1) doodle.dx = 0;
+}
   // Screen wrapping
   if (doodle.x + doodle.width < 0) {
     doodle.x = canvas.width;
